@@ -1,0 +1,17 @@
+{
+  "logMood": {
+    "body": "{\"userId\":\"demo-user\",\"mood\":7,\"tags\":[\"happy\",\"productive\"],\"notes\":\"Had a great day at work!\"}"
+  },
+  "analyzeSelfie": {
+    "body": "{\"userId\":\"demo-user\",\"imageBase64\":\"data:image/jpeg;base64,/9j/4AAQSkZJRg...\"}"
+  },
+  "generateAvatar": {
+    "body": "{\"userId\":\"demo-user\",\"description\":\"a friendly golden retriever puppy with big brown eyes\"}"
+  },
+  "dailyRecap": {
+    "userId": "demo-user"
+  },
+  "riskScan": {
+    "userId": "demo-user"
+  }
+}

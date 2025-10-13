@@ -1,0 +1,5 @@
+# Lambda functions use boto3 which is pre-installed in AWS Lambda runtime
+# No additional dependencies needed for basic functionality
+
+# If you want to test locally, install:
+boto3>=1.34.0

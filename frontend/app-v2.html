@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Mate - Your AI Pet Companion</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pet-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pet-avatar {
+            font-size: 2.5em;
+        }
+        .pet-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+        .coin-counter {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1em;
+            box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+        }
+        
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 20px 20px;
+        }
+        
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        .nav-tab {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .nav-tab.active {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        /* Mood Grid */
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .mood-btn {
+            background: #f8f9fa;
+            border: 3px solid transparent;
+            padding: 20px 10px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .mood-btn:hover {
+            transform: scale(1.05);
+            background: #e9ecef;
+        }
+        .mood-btn.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: scale(1.1);
+        }
+        .mood-emoji {
+            font-size: 2.5em;
+        }
+        .mood-label {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        /* Personality Selector */
+        .personality-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .personality-card {
+            background: #f8f9fa;
+            border: 3px solid transparent;
+            padding: 20px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .personality-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .personality-card.selected {
+            border-color: currentColor;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .personality-card.gentle { color: #93c5fd; }
+        .personality-card.playful { color: #fbbf24; }
+        .personality-card.focused { color: #a78bfa; }
+        .personality-card.sensitive { color: #fb923c; }
+        .personality-emoji {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .personality-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .personality-desc {
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        /* Buttons */
+        button.primary {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button.primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border 0.3s;
+            margin-top: 10px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        input[type="file"] {
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .output {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        .loading.show { display: block; }
+        
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        
+        .coin-notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+            font-weight: 600;
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .mood-trend {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 100px;
+            margin: 20px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .mood-bar {
+            flex: 1;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            margin: 0 2px;
+            border-radius: 4px 4px 0 0;
+            min-height: 10px;
+            transition: all 0.3s;
+        }
+        .mood-bar:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="pet-info">
+            <div class="pet-avatar" id="headerPetAvatar">🐶</div>
+            <div class="pet-name" id="headerPetName">Mind Mate</div>
+        </div>
+        <div class="coin-counter">
+            💰 <span id="coinCount">0</span>
+        </div>
+    </div>
+
+    <!-- Container -->
+    <div class="container">
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showPage('checkin')">Check In</button>
+            <button class="nav-tab" onclick="showPage('stats')">Stats</button>
+            <button class="nav-tab" onclick="showPage('personality')">Personality</button>
+            <button class="nav-tab" onclick="showPage('selfie')">Selfie</button>
+        </div>
+
+        <!-- Check-in Page -->
+        <div id="checkin" class="page active">
+            <div class="card">
+                <h2>🌟 How are you feeling?</h2>
+                
+                <div class="mood-grid">
+                    <button class="mood-btn" data-mood="happy" onclick="selectMood('happy', 8)">
+                        <div class="mood-emoji">😊</div>
+                        <div class="mood-label">Happy</div>
+                    </button>
+                    <button class="mood-btn" data-mood="calm" onclick="selectMood('calm', 7)">
+                        <div class="mood-emoji">😌</div>
+                        <div class="mood-label">Calm</div>
+                    </button>
+                    <button class="mood-btn" data-mood="tired" onclick="selectMood('tired', 5)">
+                        <div class="mood-emoji">😴</div>
+                        <div class="mood-label">Tired</div>
+                    </button>
+                    <button class="mood-btn" data-mood="anxious" onclick="selectMood('anxious', 4)">
+                        <div class="mood-emoji">😰</div>
+                        <div class="mood-label">Anxious</div>
+                    </button>
+                    <button class="mood-btn" data-mood="sad" onclick="selectMood('sad', 3)">
+                        <div class="mood-emoji">😢</div>
+                        <div class="mood-label">Sad</div>
+                    </button>
+                    <button class="mood-btn" data-mood="frustrated" onclick="selectMood('frustrated', 4)">
+                        <div class="mood-emoji">😤</div>
+                        <div class="mood-label">Frustrated</div>
+                    </button>
+                    <button class="mood-btn" data-mood="neutral" onclick="selectMood('neutral', 6)">
+                        <div class="mood-emoji">😐</div>
+                        <div class="mood-label">Neutral</div>
+                    </button>
+                    <button class="mood-btn" data-mood="grateful" onclick="selectMood('grateful', 9)">
+                        <div class="mood-emoji">🤗</div>
+                        <div class="mood-label">Grateful</div>
+                    </button>
+                </div>
+                
+                <label style="margin-top: 20px; display: block; color: #555; font-weight: 500;">
+                    What's on your mind? (optional)
+                </label>
+                <textarea id="notes" rows="3" placeholder="Share your thoughts..."></textarea>
+                
+                <button class="primary" onclick="saveMood()">💾 Save Mood</button>
+                <div class="loading" id="moodLoading">Saving...</div>
+            </div>
+        </div>
+
+        <!-- Stats Page -->
+        <div id="stats" class="page">
+            <div class="card">
+                <h2>📊 Your Progress</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">🔥 Current Streak</div>
+                        <div class="stat-value" id="statStreak">0</div>
+                        <div class="stat-label">days</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">✅ Check-ins</div>
+                        <div class="stat-value" id="statCheckins">0</div>
+                        <div class="stat-label">total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">💰 Coins</div>
+                        <div class="stat-value" id="statCoins">0</div>
+                        <div class="stat-label">earned</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">📈 Avg Mood</div>
+                        <div class="stat-value" id="statAvgMood">0</div>
+                        <div class="stat-label">out of 10</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 20px; color: #333;">7-Day Mood Trend</h3>
+                <div class="mood-trend" id="moodTrend"></div>
+                
+                <button class="primary" onclick="loadStats()">🔄 Refresh Stats</button>
+            </div>
+        </div>
+
+        <!-- Personality Page -->
+        <div id="personality" class="page">
+            <div class="card">
+                <h2>🎭 Choose Your Companion</h2>
+                <p style="color: #666; margin-bottom: 20px;">
+                    Select a personality that resonates with you. This will affect how your AI companion responds.
+                </p>
+                
+                <div class="personality-grid">
+                    <button class="personality-card gentle" data-personality="gentle" onclick="selectPersonality('gentle')">
+                        <div class="personality-emoji">🐶</div>
+                        <div class="personality-name">Gentle Guardian</div>
+                        <div class="personality-desc">Supportive & nurturing</div>
+                    </button>
+                    <button class="personality-card playful" data-personality="playful" onclick="selectPersonality('playful')">
+                        <div class="personality-emoji">🐱</div>
+                        <div class="personality-name">Playful Pal</div>
+                        <div class="personality-desc">Energetic & fun-loving</div>
+                    </button>
+                    <button class="personality-card focused" data-personality="focused" onclick="selectPersonality('focused')">
+                        <div class="personality-emoji">🐉</div>
+                        <div class="personality-name">Focused Friend</div>
+                        <div class="personality-desc">Calm & centered</div>
+                    </button>
+                    <button class="personality-card sensitive" data-personality="sensitive" onclick="selectPersonality('sensitive')">
+                        <div class="personality-emoji">🦊</div>
+                        <div class="personality-name">Sensitive Soul</div>
+                        <div class="personality-desc">Empathetic & understanding</div>
+                    </button>
+                </div>
+                
+                <button class="primary" onclick="savePersonality()">✨ Save Personality</button>
+                <div class="loading" id="personalityLoading">Saving...</div>
+            </div>
+        </div>
+
+        <!-- Selfie Page -->
+        <div id="selfie" class="page">
+            <div class="card">
+                <h2>🤳 Analyze Your Selfie</h2>
+                <p style="color: #666; margin-bottom: 15px;">
+                    Upload a photo and we'll detect your emotions
+                </p>
+                <input id="file" type="file" accept="image/*">
+                <button class="primary" onclick="analyzeSelfie()">🔍 Analyze Emotions</button>
+                <div class="loading" id="selfieLoading">Analyzing...</div>
+            </div>
+        </div>
+
+        <!-- Output -->
+        <div class="output" id="output">Results will appear here...</div>
+    </div>
+
+    <script>
+        // API Gateway URL
+        const API = "https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com";
+        const USER_ID = "demo-user";
+        
+        let selectedMoodValue = null;
+        let selectedMoodName = null;
+        let selectedPersonalityType = null;
+        
+        const PERSONALITY_EMOJIS = {
+            gentle: '🐶',
+            playful: '🐱',
+            focused: '🐉',
+            sensitive: '🦊'
+        };
+        
+        // Initialize
+        window.onload = function() {
+            loadProfile();
+            loadStats();
+        };
+        
+        // Page Navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (pageId === 'stats') {
+                loadStats();
+            }
+        }
+        
+        // Load Profile
+        async function loadProfile() {
+            try {
+                const response = await fetch(`${API}/profile?userId=${USER_ID}`);
+                const data = await response.json();
+                
+                if (data.ok && data.profile) {
+                    const { personality, petName, coins } = data.profile;
+                    document.getElementById('headerPetAvatar').textContent = PERSONALITY_EMOJIS[personality] || '🐶';
+                    document.getElementById('headerPetName').textContent = petName || 'Mind Mate';
+                    document.getElementById('coinCount').textContent = coins || 0;
+                    
+                    // Select personality card
+                    selectedPersonalityType = personality;
+                    document.querySelectorAll('.personality-card').forEach(card => {
+                        if (card.dataset.personality === personality) {
+                            card.classList.add('selected');
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+        
+        // Load Stats
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API}/stats?userId=${USER_ID}`);
+                const data = await response.json();
+                
+                if (data.ok && data.stats) {
+                    const { streak, totalCheckins, coins, avgMood, moodTrend } = data.stats;
+                    
+                    document.getElementById('statStreak').textContent = streak;
+                    document.getElementById('statCheckins').textContent = totalCheckins;
+                    document.getElementById('statCoins').textContent = coins;
+                    document.getElementById('statAvgMood').textContent = avgMood;
+                    
+                    // Render mood trend
+                    const trendContainer = document.getElementById('moodTrend');
+                    trendContainer.innerHTML = '';
+                    
+                    moodTrend.forEach(day => {
+                        const bar = document.createElement('div');
+                        bar.className = 'mood-bar';
+                        const height = day.mood ? (day.mood / 10) * 100 : 10;
+                        bar.style.height = height + '%';
+                        bar.title = `${day.date}: ${day.mood || 'No data'}`;
+                        trendContainer.appendChild(bar);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                showOutput('Error loading stats: ' + error.message);
+            }
+        }
+        
+        // Select Mood
+        function selectMood(moodName, moodValue) {
+            document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            selectedMoodValue = moodValue;
+            selectedMoodName = moodName;
+        }
+        
+        // Save Mood
+        async function saveMood() {
+            if (!selectedMoodValue) {
+                alert('Please select a mood first');
+                return;
+            }
+            
+            showLoading('moodLoading', true);
+            try {
+                const notes = document.getElementById('notes').value;
+                const tags = selectedMoodName ? [selectedMoodName] : [];
+                
+                const response = await fetch(`${API}/mood`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: USER_ID,
+                        mood: selectedMoodValue,
+                        tags: tags,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                showOutput(JSON.stringify(data, null, 2));
+                
+                if (data.ok) {
+                    showCoinNotification(data.coinsEarned || 10);
+                    loadProfile(); // Refresh coins
+                    document.getElementById('notes').value = '';
+                    document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('selected'));
+                    selectedMoodValue = null;
+                    selectedMoodName = null;
+                }
+            } catch (error) {
+                showOutput(`Error: ${error.message}`);
+            } finally {
+                showLoading('moodLoading', false);
+            }
+        }
+        
+        // Select Personality
+        function selectPersonality(personality) {
+            document.querySelectorAll('.personality-card').forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            selectedPersonalityType = personality;
+        }
+        
+        // Save Personality
+        async function savePersonality() {
+            if (!selectedPersonalityType) {
+                alert('Please select a personality first');
+                return;
+            }
+            
+            showLoading('personalityLoading', true);
+            try {
+                const response = await fetch(`${API}/profile`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: USER_ID,
+                        personality: selectedPersonalityType
+                    })
+                });
+                
+                const data = await response.json();
+                showOutput(JSON.stringify(data, null, 2));
+                
+                if (data.ok) {
+                    alert('✨ Personality updated!');
+                    loadProfile(); // Refresh header
+                }
+            } catch (error) {
+                showOutput(`Error: ${error.message}`);
+            } finally {
+                showLoading('personalityLoading', false);
+            }
+        }
+        
+        // Analyze Selfie
+        async function analyzeSelfie() {
+            const file = document.getElementById('file').files[0];
+            if (!file) {
+                alert('Please select a photo first');
+                return;
+            }
+            
+            showLoading('selfieLoading', true);
+            try {
+                const imageBase64 = await toBase64(file);
+                
+                const response = await fetch(`${API}/selfie`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: USER_ID,
+                        imageBase64: imageBase64
+                    })
+                });
+                
+                const data = await response.json();
+                showOutput(JSON.stringify(data, null, 2));
+                
+                if (data.topEmotions) {
+                    const emotions = data.topEmotions.map(e => 
+                        `${e.Type}: ${e.Confidence.toFixed(1)}%`
+                    ).join('\n');
+                    alert(`🎭 Detected emotions:\n${emotions}`);
+                    
+                    if (data.coinsEarned) {
+                        showCoinNotification(data.coinsEarned);
+                        loadProfile(); // Refresh coins
+                    }
+                }
+            } catch (error) {
+                showOutput(`Error: ${error.message}`);
+            } finally {
+                showLoading('selfieLoading', false);
+            }
+        }
+        
+        // Helper Functions
+        async function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function showLoading(id, show) {
+            document.getElementById(id).classList.toggle('show', show);
+        }
+        
+        function showOutput(text) {
+            document.getElementById('output').textContent = text;
+        }
+        
+        function showCoinNotification(coins) {
+            const notification = document.createElement('div');
+            notification.className = 'coin-notification';
+            notification.textContent = `+${coins} coins earned! 💰`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
