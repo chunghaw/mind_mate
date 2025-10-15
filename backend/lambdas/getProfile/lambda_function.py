@@ -32,7 +32,6 @@ def lambda_handler(event, context):
                 'SK': 'PROFILE',
                 'type': 'PROFILE',
                 'userId': user_id,
-                'coins': 0,
                 'personality': 'gentle',
                 'petName': 'Mind Mate'
             }
@@ -42,8 +41,7 @@ def lambda_handler(event, context):
             "ok": True,
             "profile": {
                 "personality": profile.get('personality', 'gentle'),
-                "petName": profile.get('petName', 'Mind Mate'),
-                "coins": int(profile.get('coins', 0)) if isinstance(profile.get('coins'), Decimal) else profile.get('coins', 0)
+                "petName": profile.get('petName', 'Mind Mate')
             }
         })
         

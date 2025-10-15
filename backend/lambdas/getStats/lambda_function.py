@@ -23,10 +23,6 @@ def lambda_handler(event, context):
         # Get userId from query params or default
         user_id = event.get('queryStringParameters', {}).get('userId', 'demo-user') if event.get('queryStringParameters') else 'demo-user'
         
-        # Get user profile for coins
-        profile_response = table.get_item(Key={'PK': f'USER#{user_id}', 'SK': 'PROFILE'})
-        coins = profile_response.get('Item', {}).get('coins', 0)
-        
         # Get all mood entries
         mood_response = table.query(
             KeyConditionExpression=Key('PK').eq(f'USER#{user_id}') & Key('SK').begins_with('MOOD#'),
@@ -92,7 +88,6 @@ def lambda_handler(event, context):
                 'streak': streak,
                 'totalCheckins': total_checkins,
                 'totalSelfies': total_selfies,
-                'coins': int(coins) if isinstance(coins, Decimal) else coins,
                 'avgMood': round(avg_mood, 1),
                 'moodTrend': mood_trend
             }
