@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Mind Mate - Cognito User Pool with Google OAuth'
+
+Parameters:
+  GoogleClientId:
+    Type: String
+    Description: Google OAuth Client ID
+    NoEcho: true
+  
+  GoogleClientSecret:
+    Type: String
+    Description: Google OAuth Client Secret
+    NoEcho: true
+  
+  CallbackURL:
+    Type: String
+    Description: Callback URL for OAuth
+    Default: 'http://localhost:8000'
+  
+  LogoutURL:
+    Type: String
+    Description: Logout URL for OAuth
+    Default: 'http://localhost:8000'
+
+Resources:
+  # Cognito User Pool
+  MindMateUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: MindMateUsers
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: false
+        - Name: name
+          AttributeDataType: String
+          Required: false
+          Mutable: true
+        - Name: preferred_username
+          AttributeDataType: String
+          Required: false
+          Mutable: true
+        - Name: hasPassword
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT
+      UserPoolTags:
+        Application: MindMate
+        Environment: Production
+
+  # Google Identity Provider
+  GoogleIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !Ref MindMateUserPool
+      ProviderName: Google
+      ProviderType: Google
+      ProviderDetails:
+        client_id: !Ref GoogleClientId
+        client_secret: !Ref GoogleClientSecret
+        authorize_scopes: "email profile openid"
+      AttributeMapping:
+        email: email
+        name: name
+        username: sub
+
+  # User Pool Client
+  MindMateUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn: GoogleIdentityProvider
+    Properties:
+      ClientName: MindMateWebApp
+      UserPoolId: !Ref MindMateUserPool
+      GenerateSecret: false
+      SupportedIdentityProviders:
+        - COGNITO
+        - Google
+      CallbackURLs:
+        - !Ref CallbackURL
+        - 'http://localhost:8000'
+      LogoutURLs:
+        - !Ref LogoutURL
+        - 'http://localhost:8000'
+      AllowedOAuthFlows:
+        - code
+        - implicit
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      AllowedOAuthFlowsUserPoolClient: true
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      PreventUserExistenceErrors: ENABLED
+
+  # User Pool Domain
+  MindMateUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub 'mindmate-${AWS::AccountId}'
+      UserPoolId: !Ref MindMateUserPool
+
+Outputs:
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref MindMateUserPool
+    Export:
+      Name: MindMateUserPoolId
+  
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref MindMateUserPoolClient
+    Export:
+      Name: MindMateUserPoolClientId
+  
+  UserPoolDomain:
+    Description: Cognito User Pool Domain
+    Value: !Sub 'mindmate-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com'
+    Export:
+      Name: MindMateUserPoolDomain
+  
+  OAuthURL:
+    Description: OAuth Authorization URL
+    Value: !Sub 'https://mindmate-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com/oauth2/authorize'
+  
+  Region:
+    Description: AWS Region
+    Value: !Ref AWS::Region
+    Export:
+      Name: MindMateRegion
