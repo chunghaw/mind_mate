@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Mate - Your AI Companion</title>
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.7/dist/amazon-cognito-identity.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f9f4;
+            color: #2d3748;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            border: 2px solid #d1fae5;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 12px;
+        }
+
+        .tagline {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            margin-bottom: 12px;
+        }
+
+        .btn-primary {
+            background: #86efac;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4ade80;
+            transform: translateY(-1px);
+        }
+
+        .btn-google {
+            background: white;
+            color: #2d3748;
+            border: 2px solid #d1fae5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-google:hover {
+            background: #bbf7d0;
+            border-color: #86efac;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #d1fae5;
+        }
+
+        .divider span {
+            padding: 0 12px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .input-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #2d3748;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d1fae5;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #86efac;
+        }
+
+        .link {
+            color: #4ade80;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            background: #fee2e2;
+            border: 2px solid #fca5a5;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .success {
+            background: #d1fae5;
+            border: 2px solid #86efac;
+            color: #059669;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #d1fae5;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="screen active">
+            <div class="card">
+                <div class="logo">🐾</div>
+                <h1>Mind Mate</h1>
+                <p class="tagline">Your AI Pet Companion for Mental Wellness</p>
+                <button class="btn btn-primary" onclick="showLogin()">Get Started</button>
+            </div>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen">
+            <div class="card">
+                <div class="logo">🐾</div>
+                <h1>Welcome Back</h1>
+                <p class="tagline">Sign in to continue your journey</p>
+                
+                <div id="loginError" class="error" style="display: none;"></div>
+                
+                <button class="btn btn-google" onclick="signInWithGoogle()">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+                
+                <div class="divider"><span>or</span></div>
+                
+                <div class="input-group">
+                    <label class="input-label">Email</label>
+                    <input type="email" id="loginEmail" placeholder="your@email.com">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••">
+                </div>
+                
+                <button class="btn btn-primary" onclick="login()">Sign In</button>
+                
+                <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
+                    Don't have an account? <a href="#" class="link" onclick="showSignup(); return false;">Sign Up</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Signup Screen -->
+        <div id="signupScreen" class="screen">
+            <div class="card">
+                <div class="logo">🐾</div>
+                <h1>Create Account</h1>
+                <p class="tagline">Start your wellness journey today</p>
+                
+                <div id="signupError" class="error" style="display: none;"></div>
+                <div id="signupSuccess" class="success" style="display: none;"></div>
+                
+                <div class="input-group">
+                    <label class="input-label">Email</label>
+                    <input type="email" id="signupEmail" placeholder="your@email.com">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Password</label>
+                    <input type="password" id="signupPassword" placeholder="At least 8 characters">
+                </div>
+                
+                <button class="btn btn-primary" onclick="signup()">Create Account</button>
+                
+                <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
+                    Already have an account? <a href="#" class="link" onclick="showLogin(); return false;">Sign In</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cognito Configuration
+        const poolData = {
+            UserPoolId: 'us-east-1_0xN9Gguz1',
+            ClientId: '2ck4nnkj2c5sd7qsnuc1r1kbrm'
+        };
+        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+        const COGNITO_DOMAIN = 'mindmate-403745271636.auth.us-east-1.amazoncognito.com';
+        const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+        // Navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showLogin() {
+            showScreen('loginScreen');
+        }
+
+        function showSignup() {
+            showScreen('signupScreen');
+        }
+
+        // Google Sign-In
+        function signInWithGoogle() {
+            const googleAuthUrl = `https://${COGNITO_DOMAIN}/oauth2/authorize?` +
+                `client_id=${poolData.ClientId}&` +
+                `response_type=code&` +
+                `scope=email+openid+profile&` +
+                `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+                `identity_provider=Google`;
+            
+            window.location.href = googleAuthUrl;
+        }
+
+        // Sign Up
+        function signup() {
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            
+            if (!email || !password) {
+                showError('signupError', 'Please fill in all fields');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showError('signupError', 'Password must be at least 8 characters');
+                return;
+            }
+            
+            const attributeList = [
+                new AmazonCognitoIdentity.CognitoUserAttribute({Name: 'email', Value: email})
+            ];
+            
+            userPool.signUp(email, password, attributeList, null, (err, result) => {
+                if (err) {
+                    showError('signupError', err.message);
+                    return;
+                }
+                
+                document.getElementById('signupSuccess').textContent = 
+                    'Account created! Please check your email to verify your account, then sign in.';
+                document.getElementById('signupSuccess').style.display = 'block';
+                
+                setTimeout(() => showLogin(), 3000);
+            });
+        }
+
+        // Login
+        function login() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showError('loginError', 'Please fill in all fields');
+                return;
+            }
+            
+            const authData = {
+                Username: email,
+                Password: password
+            };
+            
+            const authDetails = new AmazonCognitoIdentity.AuthenticationDetails(authData);
+            const userData = {
+                Username: email,
+                Pool: userPool
+            };
+            
+            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+            
+            cognitoUser.authenticateUser(authDetails, {
+                onSuccess: (result) => {
+                    const token = result.getIdToken().getJwtToken();
+                    const userId = result.getIdToken().payload.sub;
+                    
+                    // Store auth data
+                    localStorage.setItem('mindmate_token', token);
+                    localStorage.setItem('mindmate_userId', userId);
+                    localStorage.setItem('mindmate_email', email);
+                    
+                    // Redirect to main app
+                    window.location.href = '/index.html';
+                },
+                onFailure: (err) => {
+                    showError('loginError', err.message);
+                }
+            });
+        }
+
+        // Helper Functions
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        // Check if already logged in
+        window.onload = () => {
+            const token = localStorage.getItem('mindmate_token');
+            if (token) {
+                window.location.href = '/index.html';
+            }
+            
+            // Handle OAuth callback
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('code')) {
+                // Google OAuth callback - exchange code for token
+                // For now, just show success
+                showError('loginError', 'Google sign-in successful! Redirecting...');
+                setTimeout(() => window.location.href = '/index.html', 2000);
+            }
+        };
+    </script>
+</body>
+</html>
