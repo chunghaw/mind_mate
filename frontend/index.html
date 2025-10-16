@@ -470,7 +470,7 @@
         };
         const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
         const COGNITO_DOMAIN = 'mindmate-403745271636.auth.us-east-1.amazoncognito.com';
-        const REDIRECT_URI = window.location.origin + window.location.pathname;
+        const REDIRECT_URI = window.location.origin + '/';
         const API_BASE = 'https://emo-companion-api.execute-api.us-east-1.amazonaws.com/prod';
 
         // Onboarding State
