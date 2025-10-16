@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mind Mate - Your AI Companion</title>
+    <link rel="icon" type="image/jpeg" href="Mind_Mate.jpeg">
     <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.7/dist/amazon-cognito-identity.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
@@ -52,8 +53,10 @@
         }
 
         .logo {
-            font-size: 64px;
-            margin-bottom: 20px;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            display: block;
         }
 
         h1 {
@@ -204,7 +207,7 @@
         <!-- Welcome Screen -->
         <div id="welcomeScreen" class="screen active">
             <div class="card">
-                <div class="logo">🐾</div>
+                <img src="Mind_Mate.jpeg" alt="Mind Mate" class="logo">
                 <h1>Mind Mate</h1>
                 <p class="tagline">Your AI Pet Companion for Mental Wellness</p>
                 <button class="btn btn-primary" onclick="showLogin()">Get Started</button>
@@ -214,7 +217,7 @@
         <!-- Login Screen -->
         <div id="loginScreen" class="screen">
             <div class="card">
-                <div class="logo">🐾</div>
+                <img src="Mind_Mate.jpeg" alt="Mind Mate" class="logo">
                 <h1>Welcome Back</h1>
                 <p class="tagline">Sign in to continue your journey</p>
                 
@@ -253,7 +256,7 @@
         <!-- Signup Screen -->
         <div id="signupScreen" class="screen">
             <div class="card">
-                <div class="logo">🐾</div>
+                <img src="Mind_Mate.jpeg" alt="Mind Mate" class="logo">
                 <h1>Create Account</h1>
                 <p class="tagline">Start your wellness journey today</p>
                 

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mind Mate - Your AI Companion</title>
+    <link rel="icon" type="image/jpeg" href="Mind_Mate.jpeg">
     <style>
         * {
             margin: 0;
@@ -56,9 +57,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
             margin: 0 auto 12px;
             border: 3px solid var(--primary);
+            overflow: hidden;
+        }
+        
+        .pet-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .pet-name {
@@ -435,7 +442,9 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <div class="pet-avatar" id="petAvatar">🐶</div>
+            <div class="pet-avatar" id="petAvatar">
+                <img src="Mind_Mate.jpeg" alt="Mind Mate">
+            </div>
             <div class="pet-name" id="petName">Mind Mate</div>
             <span class="personality-badge" id="personalityBadge">Gentle Guardian</span>
         </div>
