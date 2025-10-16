@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mind Mate - Auth Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.7/dist/amazon-cognito-identity.min.js"></script>
+</head>
+<body>
+    <h1>Mind Mate - Authentication Test</h1>
+    
+    <div id="login">
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <button onclick="signUp()">Sign Up</button>
+    </div>
+    
+    <div id="result"></div>
+    
+    <script>
+        const poolData = {
+            UserPoolId: 'us-east-1_0xN9Gguz1',
+            ClientId: '2ck4nnkj2c5sd7qsnuc1r1kbrm'
+        };
+        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+        
+        function signUp() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const attributeList = [
+                new AmazonCognitoIdentity.CognitoUserAttribute({Name: 'email', Value: email})
+            ];
+            
+            userPool.signUp(email, password, attributeList, null, (err, result) => {
+                if (err) {
+                    document.getElementById('result').innerHTML = 'Error: ' + err.message;
+                    return;
+                }
+                document.getElementById('result').innerHTML = 'Success! Check email for verification code. User: ' + result.user.getUsername();
+            });
+        }
+        
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const authData = {
+                Username: email,
+                Password: password
+            };
+            
+            const authDetails = new AmazonCognitoIdentity.AuthenticationDetails(authData);
+            const userData = {
+                Username: email,
+                Pool: userPool
+            };
+            
+            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+            
+            cognitoUser.authenticateUser(authDetails, {
+                onSuccess: (result) => {
+                    const token = result.getIdToken().getJwtToken();
+                    document.getElementById('result').innerHTML = 'Login successful!<br>Token: ' + token.substring(0, 50) + '...';
+                },
+                onFailure: (err) => {
+                    document.getElementById('result').innerHTML = 'Error: ' + err.message;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
