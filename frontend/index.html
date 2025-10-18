@@ -622,6 +622,9 @@
                 const token = localStorage.getItem('mindmate_token');
                 const userId = localStorage.getItem('mindmate_userId');
                 
+                console.log('Token:', token ? token.substring(0, 50) + '...' : 'NO TOKEN');
+                console.log('UserId:', userId);
+                
                 // Call backend to set password for Cognito user
                 const response = await fetch(`${API_BASE}/set-password`, {
                     method: 'POST',
@@ -635,16 +638,20 @@
                     })
                 });
                 
-                const data = await response.json();
+                console.log('Response status:', response.status);
+                const responseText = await response.text();
+                console.log('Response body:', responseText);
                 
-                if (data.ok) {
+                const data = JSON.parse(responseText);
+                
+                if (response.ok && data.ok) {
                     // Store username locally
                     localStorage.setItem('mindmate_username', username);
                     
                     // Continue to personality selection
                     showScreen('personalityScreen');
                 } else {
-                    showError('setPasswordError', data.error || 'Failed to set password');
+                    showError('setPasswordError', data.error || data.message || 'Failed to set password');
                 }
             } catch (error) {
                 console.error('Set password error:', error);

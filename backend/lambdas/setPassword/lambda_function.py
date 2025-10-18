@@ -14,8 +14,20 @@ def lambda_handler(event, context):
     This allows them to login directly with username/password next time
     """
     try:
-        # Get userId from authorizer context
-        user_id = event['requestContext']['authorizer']['userId']
+        print(f"Event: {json.dumps(event)}")
+        
+        # Get userId from authorizer context or claims
+        try:
+            user_id = event['requestContext']['authorizer']['userId']
+        except (KeyError, TypeError):
+            # Try to get from JWT claims
+            try:
+                user_id = event['requestContext']['authorizer']['jwt']['claims']['sub']
+            except (KeyError, TypeError):
+                print("ERROR: No userId found in authorizer context")
+                return _resp(401, {'error': 'Unauthorized - no user ID found'})
+        
+        print(f"User ID: {user_id}")
         
         # Parse request body
         body = json.loads(event['body'])
