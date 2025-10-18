@@ -1,73 +1,127 @@
-import json, os, base64, uuid
+import json
 import boto3
+import base64
+import os
+from datetime import datetime
 
-s3 = boto3.client('s3')
 bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(os.environ.get('TABLE_NAME', 'EmoCompanion'))
-BUCKET = os.environ.get('BUCKET', 'mindmate-uploads')
+s3 = boto3.client('s3')
 
-def _resp(status, body):
-    return {
-        "statusCode": status,
-        "headers": {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Allow-Methods": "OPTIONS,POST"
-        },
-        "body": json.dumps(body)
-    }
+BUCKET_NAME = 'mindmate-avatars-403745271636'
+
+# Guardrails: Safe, gentle, mental health companion prompts
+PERSONALITY_PROMPTS = {
+    'gentle': 'A cute, friendly dog companion with warm, gentle eyes, soft fur, cartoon style, safe for mental health app, comforting and nurturing appearance',
+    'playful': 'A cheerful, energetic cat companion with bright eyes, playful expression, cartoon style, safe for mental health app, fun and uplifting appearance',
+    'focused': 'A wise, calm dragon companion with serene expression, gentle features, cartoon style, safe for mental health app, mindful and centered appearance',
+    'sensitive': 'A kind, empathetic fox companion with understanding eyes, soft features, cartoon style, safe for mental health app, compassionate and validating appearance'
+}
+
+# Negative prompts for safety
+NEGATIVE_PROMPT = 'scary, aggressive, violent, dark, disturbing, inappropriate, realistic, photorealistic, horror'
 
 def lambda_handler(event, context):
+    """
+    Generate custom pet avatar using Bedrock Titan Image
+    with guardrails for mental health companion appropriateness
+    """
     try:
-        body = json.loads(event.get("body", "{}")) if isinstance(event.get("body"), str) else (event.get("body") or {})
-        user_id = body.get("userId", "demo-user")
-        pet_description = body.get("description", "a friendly golden retriever puppy with big eyes")
+        print(f"Event: {json.dumps(event)}")
         
-        # Generate avatar using Titan Image
-        prompt = f"A cute cartoon-style AI pet avatar: {pet_description}. Friendly, warm, approachable style. Digital art."
+        # Get userId from request
+        try:
+            user_id = event['requestContext']['authorizer']['jwt']['claims']['sub']
+        except (KeyError, TypeError):
+            body = json.loads(event['body'])
+            user_id = body.get('userId')
+            if not user_id:
+                return _resp(401, {'error': 'Unauthorized'})
         
-        bedrock_body = {
-            "taskType": "TEXT_IMAGE",
+        # Parse request
+        body = json.loads(event['body'])
+        personality = body.get('personality', 'gentle')
+        custom_description = body.get('description', '')
+        
+        # Build prompt with guardrails
+        base_prompt = PERSONALITY_PROMPTS.get(personality, PERSONALITY_PROMPTS['gentle'])
+        
+        # If user provides custom description, sanitize and append
+        if custom_description:
+            # Remove potentially harmful keywords
+            harmful_keywords = ['scary', 'violent', 'aggressive', 'dark', 'horror', 'disturbing']
+            sanitized = custom_description.lower()
+            for keyword in harmful_keywords:
+                if keyword in sanitized:
+                    return _resp(400, {'error': 'Please use gentle, positive descriptions for your companion'})
+            
+            prompt = f"{base_prompt}, {custom_description}, gentle mental health companion"
+        else:
+            prompt = f"{base_prompt}, gentle mental health companion"
+        
+        print(f"Generating avatar with prompt: {prompt}")
+        
+        # Call Bedrock Titan Image
+        request_body = {
             "textToImageParams": {
-                "text": prompt
+                "text": prompt,
+                "negativeText": NEGATIVE_PROMPT
             },
+            "taskType": "TEXT_IMAGE",
             "imageGenerationConfig": {
                 "numberOfImages": 1,
                 "quality": "standard",
                 "height": 512,
                 "width": 512,
-                "cfgScale": 8.0
+                "cfgScale": 8.0,
+                "seed": int(datetime.now().timestamp())
             }
         }
         
         response = bedrock.invoke_model(
             modelId='amazon.titan-image-generator-v1',
-            body=json.dumps(bedrock_body)
+            body=json.dumps(request_body)
         )
         
         response_body = json.loads(response['body'].read())
-        image_b64 = response_body['images'][0]
-        image_bytes = base64.b64decode(image_b64)
+        
+        # Get generated image
+        image_base64 = response_body['images'][0]
+        image_bytes = base64.b64decode(image_base64)
         
         # Save to S3
-        key = f"avatars/{user_id}/{uuid.uuid4().hex}.png"
-        s3.put_object(Bucket=BUCKET, Key=key, Body=image_bytes, ContentType="image/png")
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"avatars/{user_id}_{timestamp}.png"
         
-        avatar_url = f"https://{BUCKET}.s3.amazonaws.com/{key}"
+        s3.put_object(
+            Bucket=BUCKET_NAME,
+            Key=filename,
+            Body=image_bytes,
+            ContentType='image/png'
+        )
         
-        # Update user profile
-        table.put_item(Item={
-            "PK": f"USER#{user_id}",
-            "SK": "PROFILE",
-            "type": "PROFILE",
-            "userId": user_id,
-            "petAvatarUrl": avatar_url,
-            "petDescription": pet_description,
-            "updatedAt": boto3.dynamodb.types.Decimal(str(context.request_time_epoch))
+        # Generate public URL
+        avatar_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
+        
+        print(f"Avatar generated: {avatar_url}")
+        
+        return _resp(200, {
+            'ok': True,
+            'avatarUrl': avatar_url,
+            'message': 'Avatar generated successfully'
         })
         
-        return _resp(200, {"ok": True, "avatarUrl": avatar_url, "s3Key": key})
     except Exception as e:
-        return _resp(500, {"error": str(e)})
+        print(f'Error generating avatar: {e}')
+        return _resp(500, {'error': str(e)})
+
+def _resp(status_code, body):
+    return {
+        'statusCode': status_code,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+            'Access-Control-Allow-Methods': 'POST,OPTIONS'
+        },
+        'body': json.dumps(body)
+    }
