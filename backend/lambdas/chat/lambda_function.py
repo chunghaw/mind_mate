@@ -127,7 +127,6 @@ Respond naturally and supportively to the user's message."""
                 'Content-Type': 'application/json'
             },
             'body': json.dumps({
-                'error': str(e),
-                'response': "I'm here to listen. How can I support you today?"
+                'error': str(e)
             })
         }
