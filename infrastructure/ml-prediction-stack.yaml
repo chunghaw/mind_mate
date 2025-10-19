@@ -1,0 +1,395 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Mind Mate - ML Prediction System Infrastructure'
+
+Parameters:
+  ModelBucketName:
+    Type: String
+    Description: S3 bucket name for ML models and training data
+    Default: mindmate-ml-models
+
+Resources:
+  # DynamoDB Table for Risk Assessments
+  RiskAssessmentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MindMate-RiskAssessments
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  # DynamoDB Table for Training Jobs
+  TrainingJobsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MindMate-TrainingJobs
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: jobId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: jobId
+          KeyType: HASH
+
+  # DynamoDB Table for Interventions
+  InterventionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MindMate-Interventions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: interventionId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: interventionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UserInterventionsIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # S3 Bucket for ML Models and Training Data
+  MLModelsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ModelBucketName}-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !GetAtt MLDataEncryptionKey.Arn
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldTrainingData
+            Status: Enabled
+            ExpirationInDays: 90
+            Prefix: training/
+          - Id: KeepLatestModels
+            Status: Enabled
+            NoncurrentVersionExpirationInDays: 30
+            Prefix: models/
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # KMS Key for Data Encryption
+  MLDataEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: KMS key for ML prediction system data encryption
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow Lambda to use the key
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - 'kms:Decrypt'
+              - 'kms:Encrypt'
+              - 'kms:GenerateDataKey'
+            Resource: '*'
+          - Sid: Allow SageMaker to use the key
+            Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action:
+              - 'kms:Decrypt'
+              - 'kms:Encrypt'
+              - 'kms:GenerateDataKey'
+            Resource: '*'
+
+  MLDataEncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/mindmate-ml-data
+      TargetKeyId: !Ref MLDataEncryptionKey
+
+  # IAM Role for ML Lambda Functions
+  MLLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MindMate-MLLambdaRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: MLLambdaPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # DynamoDB Permissions
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                  - dynamodb:UpdateItem
+                  - dynamodb:Scan
+                  - dynamodb:BatchGetItem
+                Resource:
+                  - !GetAtt RiskAssessmentsTable.Arn
+                  - !GetAtt TrainingJobsTable.Arn
+                  - !GetAtt InterventionsTable.Arn
+                  - !Sub '${InterventionsTable.Arn}/index/*'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/EmoCompanion'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/EmoCompanion/index/*'
+              # S3 Permissions
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:DeleteObject
+                Resource:
+                  - !GetAtt MLModelsBucket.Arn
+                  - !Sub '${MLModelsBucket.Arn}/*'
+              # KMS Permissions
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:Encrypt
+                  - kms:GenerateDataKey
+                Resource: !GetAtt MLDataEncryptionKey.Arn
+              # Comprehend Permissions
+              - Effect: Allow
+                Action:
+                  - comprehend:DetectSentiment
+                  - comprehend:BatchDetectSentiment
+                Resource: '*'
+              # Bedrock Permissions
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: '*'
+              # Lambda Invoke Permissions (for orchestration)
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:mindmate-*'
+              # SNS Permissions (for alerts)
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref MLAlertsSnsTopic
+              # SageMaker Permissions
+              - Effect: Allow
+                Action:
+                  - sagemaker:CreateTrainingJob
+                  - sagemaker:DescribeTrainingJob
+                  - sagemaker:StopTrainingJob
+                Resource: '*'
+
+  # IAM Role for SageMaker
+  SageMakerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MindMate-SageMakerRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+      Policies:
+        - PolicyName: SageMakerS3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt MLModelsBucket.Arn
+                  - !Sub '${MLModelsBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:Encrypt
+                  - kms:GenerateDataKey
+                Resource: !GetAtt MLDataEncryptionKey.Arn
+
+  # SNS Topic for ML System Alerts
+  MLAlertsSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: MindMate-MLAlerts
+      DisplayName: Mind Mate ML System Alerts
+      Subscription:
+        - Endpoint: admin@example.com  # Replace with actual admin email
+          Protocol: email
+
+  # EventBridge Rule for Daily Risk Assessment
+  DailyRiskAssessmentRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: MindMate-DailyRiskAssessment
+      Description: Trigger daily risk assessment for all users at 6 AM UTC
+      ScheduleExpression: cron(0 6 * * ? *)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt RiskAssessmentOrchestratorFunction.Arn
+          Id: RiskAssessmentTarget
+
+  # EventBridge Rule for Monthly Model Retraining
+  MonthlyRetrainingRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: MindMate-MonthlyRetraining
+      Description: Trigger model retraining on the 1st of each month
+      ScheduleExpression: cron(0 0 1 * ? *)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt PrepareTrainingDataFunction.Arn
+          Id: RetrainingTarget
+
+  # Lambda Permission for EventBridge (Daily Assessment)
+  DailyAssessmentLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref RiskAssessmentOrchestratorFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DailyRiskAssessmentRule.Arn
+
+  # Lambda Permission for EventBridge (Monthly Retraining)
+  MonthlyRetrainingLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref PrepareTrainingDataFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt MonthlyRetrainingRule.Arn
+
+  # Placeholder Lambda Functions (will be deployed separately)
+  RiskAssessmentOrchestratorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: mindmate-riskAssessmentOrchestrator
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt MLLambdaExecutionRole.Arn
+      Timeout: 900
+      MemorySize: 512
+      Environment:
+        Variables:
+          RISK_ASSESSMENTS_TABLE: !Ref RiskAssessmentsTable
+          INTERVENTIONS_TABLE: !Ref InterventionsTable
+          SNS_TOPIC_ARN: !Ref MLAlertsSnsTopic
+      Code:
+        ZipFile: |
+          import json
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': json.dumps('Placeholder - will be replaced')}
+
+  PrepareTrainingDataFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: mindmate-prepareTrainingData
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt MLLambdaExecutionRole.Arn
+      Timeout: 900
+      MemorySize: 1024
+      Environment:
+        Variables:
+          ML_MODELS_BUCKET: !Ref MLModelsBucket
+          TRAINING_JOBS_TABLE: !Ref TrainingJobsTable
+          SAGEMAKER_ROLE_ARN: !GetAtt SageMakerExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': json.dumps('Placeholder - will be replaced')}
+
+Outputs:
+  RiskAssessmentsTableName:
+    Description: DynamoDB table for risk assessments
+    Value: !Ref RiskAssessmentsTable
+    Export:
+      Name: MindMate-RiskAssessmentsTable
+
+  TrainingJobsTableName:
+    Description: DynamoDB table for training jobs
+    Value: !Ref TrainingJobsTable
+    Export:
+      Name: MindMate-TrainingJobsTable
+
+  InterventionsTableName:
+    Description: DynamoDB table for interventions
+    Value: !Ref InterventionsTable
+    Export:
+      Name: MindMate-InterventionsTable
+
+  MLModelsBucketName:
+    Description: S3 bucket for ML models and training data
+    Value: !Ref MLModelsBucket
+    Export:
+      Name: MindMate-MLModelsBucket
+
+  MLLambdaRoleArn:
+    Description: IAM role ARN for ML Lambda functions
+    Value: !GetAtt MLLambdaExecutionRole.Arn
+    Export:
+      Name: MindMate-MLLambdaRoleArn
+
+  SageMakerRoleArn:
+    Description: IAM role ARN for SageMaker
+    Value: !GetAtt SageMakerExecutionRole.Arn
+    Export:
+      Name: MindMate-SageMakerRoleArn
+
+  MLAlertsSnsTopicArn:
+    Description: SNS topic ARN for ML system alerts
+    Value: !Ref MLAlertsSnsTopic
+    Export:
+      Name: MindMate-MLAlertsSnsTopicArn
+
+  KMSKeyId:
+    Description: KMS key ID for data encryption
+    Value: !Ref MLDataEncryptionKey
+    Export:
+      Name: MindMate-MLDataEncryptionKeyId

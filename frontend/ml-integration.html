@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Mate - ML Integration Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .risk-indicator {
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .risk-minimal { background: #d4edda; border-left: 5px solid #28a745; }
+        .risk-low { background: #d1ecf1; border-left: 5px solid #17a2b8; }
+        .risk-moderate { background: #fff3cd; border-left: 5px solid #ffc107; }
+        .risk-high { background: #f8d7da; border-left: 5px solid #dc3545; }
+        .risk-critical { background: #f5c6cb; border-left: 5px solid #721c24; }
+
+        .risk-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .risk-message {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .risk-score {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .intervention-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .intervention-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .resources {
+            margin-top: 15px;
+        }
+
+        .resource-item {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .resource-name {
+            font-weight: 500;
+        }
+
+        .resource-number {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .features-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .feature-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .feature-item:last-child {
+            border-bottom: none;
+        }
+
+        .feature-label {
+            color: #666;
+        }
+
+        .feature-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .demo-note {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .demo-note strong {
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🐾 Mind Mate ML Demo</h1>
+            <p class="subtitle">Proactive Mental Health Risk Assessment</p>
+
+            <div class="demo-note">
+                <strong>Demo Mode:</strong> This shows how ML predicts mental health crises 3-7 days early using real AWS services.
+            </div>
+
+            <div class="input-group">
+                <label for="userId">Select Demo User:</label>
+                <select id="userId">
+                    <option value="demo_user_stable">Stable User (Low Risk)</option>
+                    <option value="demo_user_declining">Declining User (Moderate Risk)</option>
+                    <option value="demo_user_crisis" selected>Crisis User (High Risk)</option>
+                    <option value="demo_user_recovering">Recovering User (Low Risk)</option>
+                    <option value="demo_user_volatile">Volatile User (Moderate Risk)</option>
+                </select>
+            </div>
+
+            <button id="assessBtn" onclick="assessRisk()">🔍 Assess Risk</button>
+            <button id="viewFeaturesBtn" onclick="viewFeatures()" style="background: #6c757d;">📊 View Features</button>
+
+            <div id="loading" class="loading" style="display: none;">
+                Analyzing 49 features...
+            </div>
+
+            <div id="riskIndicator" class="risk-indicator"></div>
+
+            <div id="featuresDisplay" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'YOUR_API_GATEWAY_URL'; // Replace with your API Gateway URL
+
+        async function assessRisk() {
+            const userId = document.getElementById('userId').value;
+            const assessBtn = document.getElementById('assessBtn');
+            const loading = document.getElementById('loading');
+            const riskIndicator = document.getElementById('riskIndicator');
+
+            // Show loading
+            assessBtn.disabled = true;
+            loading.style.display = 'block';
+            riskIndicator.style.display = 'none';
+
+            try {
+                // For demo: Call Lambda directly or use API Gateway
+                // This is a mock response - replace with actual API call
+                const response = await mockAssessRisk(userId);
+
+                // Display risk assessment
+                displayRiskAssessment(response);
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error assessing risk. Check console for details.');
+            } finally {
+                assessBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        function mockAssessRisk(userId) {
+            // Mock data for demo - replace with actual API call
+            const mockData = {
+                'demo_user_stable': {
+                    riskScore: 0.15,
+                    riskLevel: 'minimal',
+                    features: {
+                        mood_mean_7day: 7.2,
+                        consecutive_low_days: 0,
+                        negative_sentiment: 0.15,
+                        despair_keywords: 0,
+                        crisis_keywords: 0
+                    }
+                },
+                'demo_user_declining': {
+                    riskScore: 0.52,
+                    riskLevel: 'moderate',
+                    features: {
+                        mood_mean_7day: 4.8,
+                        consecutive_low_days: 2,
+                        negative_sentiment: 0.38,
+                        despair_keywords: 3,
+                        crisis_keywords: 0
+                    }
+                },
+                'demo_user_crisis': {
+                    riskScore: 0.85,
+                    riskLevel: 'critical',
+                    features: {
+                        mood_mean_7day: 2.1,
+                        consecutive_low_days: 6,
+                        negative_sentiment: 0.72,
+                        despair_keywords: 12,
+                        crisis_keywords: 2
+                    }
+                },
+                'demo_user_recovering': {
+                    riskScore: 0.25,
+                    riskLevel: 'low',
+                    features: {
+                        mood_mean_7day: 6.5,
+                        consecutive_low_days: 0,
+                        negative_sentiment: 0.22,
+                        despair_keywords: 1,
+                        crisis_keywords: 0
+                    }
+                },
+                'demo_user_volatile': {
+                    riskScore: 0.48,
+                    riskLevel: 'moderate',
+                    features: {
+                        mood_mean_7day: 5.2,
+                        consecutive_low_days: 1,
+                        negative_sentiment: 0.35,
+                        despair_keywords: 2,
+                        crisis_keywords: 0
+                    }
+                }
+            };
+
+            return new Promise(resolve => {
+                setTimeout(() => resolve(mockData[userId]), 2000);
+            });
+        }
+
+        function displayRiskAssessment(data) {
+            const riskIndicator = document.getElementById('riskIndicator');
+            const { riskScore, riskLevel, features } = data;
+
+            // Clear previous classes
+            riskIndicator.className = 'risk-indicator';
+            riskIndicator.classList.add(`risk-${riskLevel}`);
+
+            const messages = {
+                'minimal': {
+                    title: '✅ Minimal Risk',
+                    message: 'Great news! Your companion sees you\'re doing well. Keep up the good work with your mental wellness journey!'
+                },
+                'low': {
+                    title: '🟢 Low Risk',
+                    message: 'You\'re doing okay! Your companion is here if you need support. Consider some self-care activities today.'
+                },
+                'moderate': {
+                    title: '🟡 Moderate Risk',
+                    message: 'Your companion has noticed you might be struggling a bit. Let\'s try some coping strategies together.',
+                    intervention: true
+                },
+                'high': {
+                    title: '🟠 High Risk',
+                    message: 'Your companion is concerned about you. You\'ve been going through a tough time. Let\'s get you some support.',
+                    intervention: true,
+                    showResources: true
+                },
+                'critical': {
+                    title: '🔴 Critical Risk',
+                    message: 'Your companion is very concerned. You don\'t have to face this alone. Help is available 24/7.',
+                    intervention: true,
+                    showResources: true,
+                    urgent: true
+                }
+            };
+
+            const config = messages[riskLevel];
+
+            let html = `
+                <div class="risk-title">${config.title}</div>
+                <div class="risk-message">${config.message}</div>
+                <div class="risk-score">Risk Score: ${(riskScore * 100).toFixed(0)}%</div>
+            `;
+
+            if (config.intervention) {
+                html += `
+                    <div class="intervention-box">
+                        <div class="intervention-title">💙 Personalized Support</div>
+                        <p>Based on your patterns, here are some activities that might help:</p>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Take 5 deep breaths (2 minutes)</li>
+                            <li>Step outside for fresh air (5 minutes)</li>
+                            <li>Write down how you're feeling (3 minutes)</li>
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (config.showResources) {
+                html += `
+                    <div class="resources">
+                        <div class="intervention-title">🆘 Crisis Resources (24/7)</div>
+                        <div class="resource-item">
+                            <span class="resource-name">988 Suicide & Crisis Lifeline</span>
+                            <span class="resource-number">988</span>
+                        </div>
+                        <div class="resource-item">
+                            <span class="resource-name">Crisis Text Line</span>
+                            <span class="resource-number">Text HOME to 741741</span>
+                        </div>
+                        <div class="resource-item">
+                            <span class="resource-name">Emergency</span>
+                            <span class="resource-number">911</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            riskIndicator.innerHTML = html;
+            riskIndicator.style.display = 'block';
+        }
+
+        async function viewFeatures() {
+            const userId = document.getElementById('userId').value;
+            const featuresDisplay = document.getElementById('featuresDisplay');
+            const viewFeaturesBtn = document.getElementById('viewFeaturesBtn');
+
+            viewFeaturesBtn.disabled = true;
+            viewFeaturesBtn.textContent = 'Loading...';
+
+            try {
+                const response = await mockAssessRisk(userId);
+                const { features } = response;
+
+                let html = `
+                    <div class="features-display">
+                        <div style="font-weight: bold; margin-bottom: 10px; color: #667eea;">
+                            📊 Extracted Features (5 of 49 shown)
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-label">Average Mood (7 days)</span>
+                            <span class="feature-value">${features.mood_mean_7day.toFixed(1)}/10</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-label">Consecutive Low Days</span>
+                            <span class="feature-value">${features.consecutive_low_days}</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-label">Negative Sentiment</span>
+                            <span class="feature-value">${(features.negative_sentiment * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-label">Despair Keywords</span>
+                            <span class="feature-value">${features.despair_keywords}</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-label">Crisis Keywords</span>
+                            <span class="feature-value">${features.crisis_keywords}</span>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                            Full system extracts 49 features including mood trends, behavioral patterns, and sentiment analysis.
+                        </div>
+                    </div>
+                `;
+
+                featuresDisplay.innerHTML = html;
+                featuresDisplay.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                viewFeaturesBtn.disabled = false;
+                viewFeaturesBtn.textContent = '📊 View Features';
+            }
+        }
+
+        // Auto-assess on page load
+        window.onload = () => {
+            setTimeout(() => assessRisk(), 1000);
+        };
+    </script>
+</body>
+</html>

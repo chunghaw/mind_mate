@@ -1,0 +1,4 @@
+{
+  "minDays": 60,
+  "validationSplit": 0.2
+}
