@@ -741,6 +741,60 @@
         .warning {
             color: var(--yellow);
         }
+
+        /* ===== TOOLTIP STYLES ===== */
+        .info-tooltip {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 18px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 6px;
+            transition: all 0.2s;
+            vertical-align: middle;
+        }
+
+        .info-tooltip:hover {
+            background: #2563eb;
+            transform: scale(1.1);
+        }
+
+        .tooltip-popup {
+            position: fixed;
+            background: #1e293b;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.6;
+            max-width: 280px;
+            z-index: 10000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .tooltip-popup.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .tooltip-popup::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 20px;
+            width: 12px;
+            height: 12px;
+            background: #1e293b;
+            transform: rotate(45deg);
+        }
     </style>
 </head>
 <body>
@@ -749,8 +803,8 @@
         
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 16px 24px; color: white; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 20px;">🧠</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="Mind_Mate.jpeg" alt="Mind Mate" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;">
                 <span style="font-weight: 700; font-size: 16px;">Mind Mate</span>
                 <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 600;">AI-POWERED</span>
             </div>
@@ -877,6 +931,7 @@
     <script>
         // ===== CONFIGURATION =====
         const API_BASE = "https://a5ttrfkhcr76hqo546gp3slfli0bkhlw.lambda-url.us-east-1.on.aws";
+        const CHAT_API = "https://7ctr3cdwnfuy2at5qt36mdziee0ugypx.lambda-url.us-east-1.on.aws";
         const USER_ID = "hackathon-demo-" + Date.now();
         
         // ===== GLOBAL STATE =====
@@ -1086,11 +1141,8 @@
             }
 
             formatText(text) {
-                // Highlight technical terms
-                return text.replace(
-                    /(AI analysis|ML model|features|confidence|risk score|prediction)/gi,
-                    '<span class="highlight-tech">$1</span>'
-                );
+                // Simple text formatting - no highlighting
+                return text;
             }
 
             showTyping() {
@@ -1231,7 +1283,7 @@
         let chatInterface;
 
         // ===== MAIN FUNCTIONS =====
-        function sendMessage() {
+        async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
             
@@ -1245,45 +1297,18 @@
             AppState.chat.isTyping = true;
             chatInterface.showTyping();
             
-            // Simulate AI response
-            setTimeout(() => {
+            // Get AI response
+            try {
+                const aiResponse = await sendChatMessage(message);
                 chatInterface.hideTyping();
-                
-                const responses = [
-                    "Thank you for sharing that with me. Based on my AI analysis, I can see you're making progress. Your mood patterns show improvement over the past week.",
-                    "I appreciate your openness. My ML model detected some positive behavioral changes. Your engagement score is 85%, which is excellent!",
-                    "That's valuable insight. I'm processing this along with your other data points to better understand your wellness patterns. Your risk score remains low at 23%.",
-                    "I hear you. My analysis shows you're building resilience. Let me suggest some activities that align with your current state."
-                ];
-                
-                const response = responses[Math.floor(Math.random() * responses.length)];
-                chatInterface.addMessage('companion', response);
-                
-                // Add insight based on message sentiment
-                setTimeout(() => {
-                    if (message.toLowerCase().includes('good') || message.toLowerCase().includes('better')) {
-                        InsightCard.add(
-                            "Positive sentiment detected! Your language patterns indicate improved emotional state.",
-                            89,
-                            45
-                        );
-                    } else if (message.toLowerCase().includes('tired') || message.toLowerCase().includes('stressed')) {
-                        InsightCard.add(
-                            "I notice some stress indicators. Consider trying a 5-minute breathing exercise.",
-                            91,
-                            38
-                        );
-                    } else {
-                        InsightCard.add(
-                            "Your communication style shows emotional awareness - a key indicator of mental wellness.",
-                            87,
-                            52
-                        );
-                    }
-                }, 1000);
-                
+                chatInterface.addMessage('companion', aiResponse);
                 AppState.chat.isTyping = false;
-            }, 1500);
+            } catch (error) {
+                console.error('Error sending message:', error);
+                chatInterface.hideTyping();
+                chatInterface.addMessage('companion', "I'm here to listen. How can I support you today?");
+                AppState.chat.isTyping = false;
+            }
         }
 
         function handleKeyPress(event) {
@@ -1458,12 +1483,21 @@
             }
         }
 
-        function loadReportView() {
+        async function loadReportView() {
             const reportView = document.getElementById('reportView');
-            reportView.innerHTML = getReportHTML();
+            reportView.innerHTML = '<div style="text-align: center; padding: 40px;">Loading your personalized ML report...</div>';
+            
+            // Fetch real ML features for this user
+            try {
+                const riskData = await APIClient.calculateRisk(USER_ID);
+                reportView.innerHTML = getReportHTML(riskData);
+            } catch (error) {
+                console.error('Error loading report:', error);
+                reportView.innerHTML = getReportHTML(null);
+            }
         }
 
-        function getReportHTML() {
+        function getReportHTML(riskData = null) {
             const today = new Date();
             const getDayLabel = (offset) => {
                 const date = new Date(today);
@@ -1471,100 +1505,113 @@
                 return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
             };
             
-            const infoIcon = '<span style="display: inline-block; width: 16px; height: 16px; background: #3b82f6; color: white; border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; font-weight: bold; cursor: help; margin-left: 6px;" title="Click for explanation">i</span>';
+            // Tooltip helper function
+            const tooltip = (text) => {
+                return `<span class="info-tooltip" onclick="showTooltip(event, '${text.replace(/'/g, "\\'")}')">ℹ️</span>`;
+            };
+            
+            // Extract features from risk data or use defaults
+            const features = riskData?.features || {};
+            const moodMean = features.mood_mean_7day || 5.0;
+            const moodTrend = features.mood_trend_7day || 0.0;
+            const moodVolatility = features.mood_volatility || 0.0;
+            const consecutiveLow = features.consecutive_low_days || 0;
+            const engagementFreq = features.daily_checkin_frequency || 0.0;
+            const engagementScore = features.platform_engagement_score || 0.0;
+            const circadianDisruption = features.circadian_disruption || 0.0;
+            const taskCompletion = features.task_completion_rate || 0.0;
+            const positiveSentiment = features.positive_sentiment || 0.0;
+            const negativeSentiment = features.negative_sentiment_frequency || 0.0;
+            const crisisKeywords = features.crisis_keywords || 0;
+            const hopelessnessScore = features.hopelessness_score || 0.0;
+            const riskScore = riskData?.riskScore || 0.23;
+            const riskLevel = riskData?.riskLevel || 'LOW';
+            
+            // Format trend display
+            const trendDisplay = moodTrend > 0 
+                ? `+${moodTrend.toFixed(2)} σ ↗️ Improving`
+                : moodTrend < 0
+                ? `${moodTrend.toFixed(2)} σ ↘️ Declining`
+                : `0.00 σ → Stable`;
+            const trendColor = moodTrend > 0 ? '#16a34a' : moodTrend < 0 ? '#ef4444' : '#64748b';
+            
+            // Format volatility
+            const volatilityDisplay = moodVolatility < 0.3 ? 'Stable' : moodVolatility < 0.6 ? 'Moderate' : 'High';
+            
+            // Format mood mean
+            const moodMeanDisplay = moodMean >= 7 ? 'Above baseline' : moodMean >= 5 ? 'Baseline' : 'Below baseline';
+            const moodMeanColor = moodMean >= 7 ? '#16a34a' : moodMean >= 5 ? '#64748b' : '#ef4444';
+            
+            // Simple status messages
+            const overallStatus = riskScore < 0.2 ? 'You\'re doing great!' : riskScore < 0.4 ? 'Things are looking good' : riskScore < 0.6 ? 'Let\'s keep an eye on things' : 'We\'re here to support you';
+            const statusColor = riskScore < 0.2 ? '#16a34a' : riskScore < 0.4 ? '#16a34a' : riskScore < 0.6 ? '#eab308' : '#ef4444';
+            const statusIcon = riskScore < 0.2 ? '✓' : riskScore < 0.4 ? '✓' : riskScore < 0.6 ? '⚠️' : '⚠️';
             
             return `
-                <div style="padding: 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                    <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 20px; border-radius: 16px; margin-bottom: 24px; color: white;">
-                        <h3 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">ML Analysis Report</h3>
-                        <p style="margin: 0; font-size: 13px; opacity: 0.9;">Generated: ${new Date().toLocaleString()} | Model: Ensemble (RF + GB)</p>
+                <div style="padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafb;">
+                    
+                    <!-- Overall Status Card -->
+                    <div style="background: white; padding: 24px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid ${statusColor};">
+                        <div style="font-size: 32px; margin-bottom: 12px;">${statusIcon}</div>
+                        <h2 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #1e293b;">${overallStatus}</h2>
+                        <p style="margin: 0; font-size: 16px; color: #64748b; line-height: 1.6;">Based on your recent activity, your mental wellness is ${riskScore < 0.4 ? 'on track' : 'something we should monitor together'}. Here's what we're seeing:</p>
                     </div>
                     
-                    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 2px solid #86efac; box-shadow: 0 4px 12px rgba(134, 239, 172, 0.2);">
+                    <!-- How You're Feeling -->
+                    <div style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 40px; height: 40px; background: #16a34a; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                                    <path d="M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0z"/>
-                                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                                    <line x1="9" y1="9" x2="9.01" y2="9"/>
-                                    <line x1="15" y1="9" x2="15.01" y2="9"/>
-                                </svg>
-                            </div>
-                            <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: #15803d;">Affective State Features</h4>
+                            <div style="font-size: 32px;">😊</div>
+                            <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #1e293b;">How You're Feeling</h3>
                         </div>
-                        <div style="font-size: 14px; color: #166534; line-height: 2;">
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #bbf7d0;">
-                                <span>Temporal trend (7-day):</span>
-                                <span style="font-weight: 600; color: #16a34a;">+0.15 σ ↗️ Improving</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #bbf7d0;">
-                                <span>Mood volatility index:</span>
-                                <span style="font-weight: 600;">0.12 (Stable)</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #bbf7d0;">
-                                <span>Consecutive low mood days:</span>
-                                <span style="font-weight: 600; color: #16a34a;">0 days ✓</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                                <span>Mean affective score:</span>
-                                <span style="font-weight: 600;">7.5/10 (Above baseline)</span>
-                            </div>
+                        <div style="background: #f8fafb; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                            <div style="font-size: 48px; font-weight: 700; color: ${moodMeanColor}; margin-bottom: 8px;">${moodMean.toFixed(1)}/10</div>
+                            <div style="font-size: 16px; color: #64748b;">Your average mood this week</div>
+                        </div>
+                        <div style="font-size: 15px; color: #475569; line-height: 1.8;">
+                            ${moodTrend > 0 ? '📈 <strong>Good news!</strong> Your mood has been improving over the past week.' : moodTrend < 0 ? '📉 Your mood has been declining. Let\'s work on this together.' : '➡️ Your mood has been stable this week.'}
                         </div>
                     </div>
                     
-                    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 2px solid #86efac; box-shadow: 0 4px 12px rgba(134, 239, 172, 0.2);">
+                    <!-- Your Activity -->
+                    <div style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 40px; height: 40px; background: #16a34a; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">📊</div>
-                            <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: #15803d;">Behavioral Engagement (n=15)</h4>
+                            <div style="font-size: 32px;">💪</div>
+                            <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #1e293b;">Your Activity</h3>
                         </div>
-                        <div style="font-size: 14px; color: #166534; line-height: 2;">
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #bbf7d0;">
-                                <span>Daily interaction frequency:</span>
-                                <span style="font-weight: 600;">85% (High adherence)</span>
+                        <div style="font-size: 15px; color: #475569; line-height: 1.8; margin-bottom: 16px;">
+                            ${engagementFreq >= 0.7 ? '✓ You\'ve been checking in regularly - great job staying connected!' : '⚠️ We haven\'t seen you as much lately. Everything okay?'}
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div style="background: #f8fafb; padding: 16px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 32px; font-weight: 700; color: #3b82f6; margin-bottom: 4px;">${(engagementFreq * 100).toFixed(0)}%</div>
+                                <div style="font-size: 13px; color: #64748b;">Days active</div>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #bbf7d0;">
-                                <span>Platform engagement score:</span>
-                                <span style="font-weight: 600;">0.89/1.0</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #bbf7d0;">
-                                <span>Circadian disruption:</span>
-                                <span style="font-weight: 600; color: #16a34a;">Minimal ✓</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                                <span>Task completion rate:</span>
-                                <span style="font-weight: 600;">78% (Consistent)</span>
+                            <div style="background: #f8fafb; padding: 16px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 32px; font-weight: 700; color: #8b5cf6; margin-bottom: 4px;">${consecutiveLow}</div>
+                                <div style="font-size: 13px; color: #64748b;">Low mood days</div>
                             </div>
                         </div>
                     </div>
                     
-                    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 16px; padding: 20px; margin-bottom: 24px; border: 2px solid #86efac; box-shadow: 0 4px 12px rgba(134, 239, 172, 0.2);">
+                    <!-- What You're Saying -->
+                    <div style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 40px; height: 40px; background: #16a34a; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">💬</div>
-                            <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: #15803d;">NLP Sentiment Analysis (n=14)</h4>
+                            <div style="font-size: 32px;">💬</div>
+                            <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #1e293b;">What You're Saying</h3>
                         </div>
-                        <div style="font-size: 14px; color: #166534; line-height: 2;">
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #bbf7d0;">
-                                <span>Positive sentiment ratio:</span>
-                                <span style="font-weight: 600;">0.78 (Above threshold)</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #bbf7d0;">
-                                <span>Negative affect frequency:</span>
-                                <span style="font-weight: 600;">Low variance</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #bbf7d0;">
-                                <span>Crisis lexicon detection:</span>
-                                <span style="font-weight: 600; color: #16a34a;">No matches ✓</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                                <span>Hopelessness semantic score:</span>
-                                <span style="font-weight: 600; color: #16a34a;">0.00 (Baseline) ✓</span>
-                            </div>
+                        <div style="font-size: 15px; color: #475569; line-height: 1.8; margin-bottom: 16px;">
+                            ${positiveSentiment >= 0.6 ? '✓ Your messages show a positive outlook - that\'s wonderful!' : positiveSentiment >= 0.4 ? 'Your messages show mixed emotions - that\'s completely normal.' : '⚠️ We\'ve noticed some concerning language. Let\'s talk about it.'}
                         </div>
+                        ${crisisKeywords > 0 ? '<div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 8px; margin-bottom: 16px;"><strong style="color: #dc2626;">⚠️ Important:</strong> We detected some concerning words. Please reach out to a counselor or call a crisis hotline if you need immediate support.</div>' : ''}
                     </div>
                     
-                    <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 20px; border-radius: 16px; margin-bottom: 16px; border: 2px solid #60a5fa;">
-                        <h3 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #1e40af;">🔮 7-Day Risk Forecast</h3>
-                        <p style="margin: 0 0 20px 0; font-size: 13px; color: #1e40af;">Predicted mental health crisis probability for the next week</p>
+                    <!-- Next Week Outlook -->
+                    <div style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="font-size: 32px;">🔮</div>
+                            <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #1e293b;">Next Week Outlook</h3>
+                        </div>
+                        <p style="margin: 0 0 20px 0; font-size: 15px; color: #64748b;">Based on your patterns, here's what we predict for the coming week:</p>
                         
                         <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px;">
                             ${[1,2,3,4,5,6,7].map(day => {
@@ -1581,42 +1628,32 @@
                             }).join('')}
                         </div>
                         
-                        <div style="background: rgba(255,255,255,0.7); border-radius: 12px; padding: 12px; font-size: 12px; color: #1e40af;">
-                            <strong>📌 What this means:</strong> Each day shows the predicted probability of a mental health crisis. 
-                            All values are below 20% (low risk). Our AI monitors these predictions and will alert you if risk exceeds 60%.
+                        <div style="background: #f0f9ff; border-radius: 12px; padding: 16px; font-size: 15px; color: #475569; line-height: 1.6;">
+                            ${riskScore < 0.2 ? '✓ <strong>Looking good!</strong> Your risk stays low all week. Keep doing what you\'re doing!' : riskScore < 0.4 ? '✓ Things look stable. We\'ll keep monitoring and let you know if anything changes.' : '⚠️ We see some elevated risk days. Let\'s work together to keep you safe.'}
                         </div>
                     </div>
                     
-                    <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 16px; padding: 20px; border: 2px solid #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);">
+                    <!-- What We Recommend -->
+                    <div style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <div style="width: 40px; height: 40px; background: #3b82f6; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">🎯</div>
-                            <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e40af;">Clinical Decision Support</h4>
+                            <div style="font-size: 32px;">💡</div>
+                            <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #1e293b;">What We Recommend</h3>
                         </div>
-                        <div style="font-size: 14px; color: #1e40af; line-height: 2;">
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #93c5fd;">
-                                <span>Intervention Threshold:</span>
-                                <span style="font-weight: 600;">60% (Clinical cutoff)</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #93c5fd;">
-                                <span>Current Risk Score:</span>
-                                <span style="font-weight: 600; color: #16a34a;">23% ✓ (37 points below)</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #93c5fd;">
-                                <span>Model Accuracy:</span>
-                                <span style="font-weight: 600;">94% (n=10,000 samples)</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                                <span>Recommendation:</span>
-                                <span style="font-weight: 600; color: #16a34a;">Continue routine monitoring ✓</span>
-                            </div>
+                        <div style="font-size: 15px; color: #475569; line-height: 1.8;">
+                            ${riskScore < 0.2 
+                                ? '✓ Keep up the great work! Continue your current routine and check in regularly.' 
+                                : riskScore < 0.4 
+                                ? '✓ You\'re doing well. Keep checking in daily and reach out if you need support.' 
+                                : riskScore < 0.6 
+                                ? '⚠️ Let\'s increase check-ins to twice daily. Consider talking to a counselor.' 
+                                : '⚠️⚠️ We recommend speaking with a mental health professional today. You\'re not alone - we\'re here to help.'}
                         </div>
                     </div>
                     
-                    <div style="margin-top: 20px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <div style="font-size: 11px; color: #64748b; line-height: 1.8;">
-                            <strong style="color: #2d3748;">⚙️ Methodology:</strong> Ensemble model combining Random Forest (n_estimators=100) and Gradient Boosting (learning_rate=0.1). 
-                            Features extracted via parallel AWS Lambda functions. Risk scores calibrated using Platt scaling. 
-                            Model trained on longitudinal data with 3-7 day prediction window. Validated accuracy: 94%.
+                    <!-- How This Works -->
+                    <div style="background: #f8fafb; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 13px; color: #64748b; line-height: 1.6;">
+                            <strong style="color: #475569;">How this works:</strong> We analyze your mood patterns, activity levels, and messages using AI to predict potential mental health challenges 3-7 days before they happen. This gives us time to help you stay ahead of difficult moments.
                         </div>
                     </div>
                 </div>
@@ -1649,6 +1686,104 @@
             AppState.modal.isOpen = false;
         }
 
+        // ===== TOOLTIP FUNCTIONALITY =====
+        let activeTooltip = null;
+
+        function showTooltip(event, text) {
+            event.stopPropagation();
+            
+            // Remove existing tooltip
+            if (activeTooltip) {
+                document.body.removeChild(activeTooltip);
+            }
+            
+            // Create new tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip-popup active';
+            tooltip.innerHTML = text;
+            document.body.appendChild(tooltip);
+            
+            // Position tooltip
+            const rect = event.target.getBoundingClientRect();
+            tooltip.style.left = Math.min(rect.left, window.innerWidth - tooltip.offsetWidth - 20) + 'px';
+            tooltip.style.top = (rect.bottom + 10) + 'px';
+            
+            activeTooltip = tooltip;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                if (activeTooltip === tooltip) {
+                    hideTooltip();
+                }
+            }, 5000);
+        }
+
+        function hideTooltip() {
+            if (activeTooltip) {
+                activeTooltip.classList.remove('active');
+                setTimeout(() => {
+                    if (activeTooltip && activeTooltip.parentNode) {
+                        document.body.removeChild(activeTooltip);
+                    }
+                    activeTooltip = null;
+                }, 200);
+            }
+        }
+
+        // Hide tooltip on click anywhere
+        document.addEventListener('click', (e) => {
+            if (activeTooltip && !e.target.classList.contains('info-tooltip')) {
+                hideTooltip();
+            }
+        });
+
+        // ===== CONVERSATIONAL AI CHAT =====
+        async function sendChatMessage(userMessage) {
+            try {
+                // Get conversation history
+                const history = AppState.chat.messages.slice(-10).map(msg => ({
+                    role: msg.sender === 'user' ? 'user' : 'assistant',
+                    content: msg.text
+                }));
+                
+                // Add wellness context
+                const systemContext = `You are a compassionate AI mental health companion. The user's current wellness score is ${AppState.wellness.score}/10 with ${AppState.wellness.riskLevel} risk level. Be supportive, empathetic, and encouraging. Keep responses concise (2-3 sentences).`;
+                
+                // Call Bedrock API via Lambda
+                const response = await fetch(CHAT_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: USER_ID,
+                        message: userMessage,
+                        history: history,
+                        context: {
+                            wellnessScore: AppState.wellness.score,
+                            riskLevel: AppState.wellness.riskLevel
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data.response || data.message || "I'm here to listen. How can I support you today?";
+                
+            } catch (error) {
+                console.error('Chat API failed:', error);
+                // Fallback responses
+                const fallbacks = [
+                    "I'm here for you. Tell me more about how you're feeling.",
+                    "That sounds challenging. What would help you feel better right now?",
+                    "Thank you for sharing. Your feelings are valid. What's one small thing that might help today?",
+                    "I appreciate you opening up. Remember, it's okay to not be okay sometimes. How can I support you?"
+                ];
+                return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+            }
+        }
+
         // ===== INITIALIZATION =====
         window.onload = () => {
             console.log('🧠 Mind Mate Hackathon Demo initialized');
@@ -1663,22 +1798,7 @@
             wellnessHero.updateProgressBar(AppState.wellness.score / 10);
             wellnessHero.startCountdown();
             
-            // Add welcome message
-            setTimeout(() => {
-                chatInterface.addMessage(
-                    'companion',
-                    "Hi! I'm your AI-powered mental health companion. I analyze 49 features to predict and prevent mental health crises 3-7 days before they happen. How are you feeling today?"
-                );
-            }, 500);
-            
-            // Add initial insight
-            setTimeout(() => {
-                InsightCard.add(
-                    "Your wellness patterns look stable this week. Great job maintaining consistent self-care habits!",
-                    92,
-                    127
-                );
-            }, 1500);
+            // Chat starts empty - user initiates conversation
             
             console.log('✅ All systems ready!');
         };
