@@ -1773,6 +1773,15 @@
                 
             } catch (error) {
                 console.error('Chat API failed:', error);
+                console.error('Chat API URL:', CHAT_API);
+                console.error('Error details:', error.message);
+                
+                // Try to get more error info
+                if (error.response) {
+                    console.error('Response status:', error.response.status);
+                    console.error('Response data:', await error.response.text());
+                }
+                
                 // Fallback responses
                 const fallbacks = [
                     "I'm here for you. Tell me more about how you're feeling.",
