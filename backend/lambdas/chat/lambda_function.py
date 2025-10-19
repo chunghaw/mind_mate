@@ -64,6 +64,12 @@ Respond naturally and supportively to the user's message."""
             'content': message
         })
         
+        # Ensure first message is from user (Claude requirement)
+        if messages and messages[0].get('role') != 'user':
+            # Remove leading assistant messages
+            while messages and messages[0].get('role') == 'assistant':
+                messages.pop(0)
+        
         # Call Bedrock Claude
         bedrock_body = {
             "anthropic_version": "bedrock-2023-05-31",
