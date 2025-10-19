@@ -102,8 +102,7 @@ Respond naturally and supportively to the user's message."""
         return {
             'statusCode': 200,
             'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Content-Type': 'application/json'
             },
             'body': json.dumps({
                 'response': ai_response,
@@ -119,8 +118,7 @@ Respond naturally and supportively to the user's message."""
         return {
             'statusCode': 500,
             'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Content-Type': 'application/json'
             },
             'body': json.dumps({
                 'error': str(e),
