@@ -16,13 +16,15 @@ def decimal_to_float(obj):
     return obj
 
 def get_user_messages(user_id, days=30):
-    """Query DynamoDB for user's mood log messages"""
+    """Query DynamoDB for user's mood log messages and chat messages"""
     try:
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=days)
         
+        messages = []
+        
         # Query mood entries with notes
-        response = table.query(
+        mood_response = table.query(
             KeyConditionExpression='PK = :pk AND SK BETWEEN :start AND :end',
             ExpressionAttributeValues={
                 ':pk': f'USER#{user_id}',
@@ -31,13 +33,30 @@ def get_user_messages(user_id, days=30):
             }
         )
         
-        messages = []
-        for item in response.get('Items', []):
+        for item in mood_response.get('Items', []):
             if item.get('type') == 'MOOD' and item.get('notes'):
                 messages.append({
                     'text': item.get('notes', ''),
                     'timestamp': item.get('ts'),
                     'mood': decimal_to_float(item.get('mood', 5))
+                })
+        
+        # Query chat messages (user messages only, not AI responses)
+        chat_response = table.query(
+            KeyConditionExpression='PK = :pk AND SK BETWEEN :start AND :end',
+            ExpressionAttributeValues={
+                ':pk': f'USER#{user_id}',
+                ':start': f'CHAT#{start_date.isoformat()}',
+                ':end': f'CHAT#{end_date.isoformat()}Z'
+            }
+        )
+        
+        for item in chat_response.get('Items', []):
+            if item.get('type') == 'CHAT' and item.get('userMessage'):
+                messages.append({
+                    'text': item.get('userMessage', ''),
+                    'timestamp': item.get('ts'),
+                    'mood': decimal_to_float(item.get('wellnessScore', 5))  # Use wellness score as mood proxy
                 })
         
         # Sort by timestamp
