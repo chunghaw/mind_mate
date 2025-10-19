@@ -1301,12 +1301,14 @@
             try {
                 const aiResponse = await sendChatMessage(message);
                 chatInterface.hideTyping();
-                chatInterface.addMessage('companion', aiResponse);
+                if (aiResponse) {
+                    chatInterface.addMessage('companion', aiResponse);
+                }
                 AppState.chat.isTyping = false;
             } catch (error) {
                 console.error('Error sending message:', error);
                 chatInterface.hideTyping();
-                chatInterface.addMessage('companion', "I'm here to listen. How can I support you today?");
+                chatInterface.addMessage('companion', `Sorry, I'm having trouble connecting right now. Please try again.`);
                 AppState.chat.isTyping = false;
             }
         }
@@ -1742,7 +1744,7 @@
             try {
                 // Get conversation history
                 const history = AppState.chat.messages.slice(-10).map(msg => ({
-                    role: msg.sender === 'user' ? 'user' : 'assistant',
+                    role: msg.type === 'user' ? 'user' : 'assistant',
                     content: msg.text
                 }));
                 
@@ -1769,18 +1771,13 @@
                 }
                 
                 const data = await response.json();
-                return data.response || data.message || "I'm here to listen. How can I support you today?";
+                return data.response || data.message;
                 
             } catch (error) {
                 console.error('Chat API failed:', error);
-                // Fallback responses
-                const fallbacks = [
-                    "I'm here for you. Tell me more about how you're feeling.",
-                    "That sounds challenging. What would help you feel better right now?",
-                    "Thank you for sharing. Your feelings are valid. What's one small thing that might help today?",
-                    "I appreciate you opening up. Remember, it's okay to not be okay sometimes. How can I support you?"
-                ];
-                return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+                console.error('Chat API URL:', CHAT_API);
+                console.error('Error details:', error.message);
+                throw error; // Re-throw to handle in UI
             }
         }
 
