@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Mate - ML Integration Demo</title>
+    <link rel="stylesheet" href="ml-wellness-widget.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f9f4;
+            color: #2d3748;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 2px solid #d1fae5;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 2px solid #d1fae5;
+        }
+
+        .demo-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #2d3748;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #86efac;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            background: #4ade80;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result {
+            background: #f0f9f4;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .info {
+            background: #dbeafe;
+            border: 2px solid #93c5fd;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Mind Mate ML Integration</h1>
+            <p class="subtitle">Proactive Mental Health Monitoring Demo</p>
+        </div>
+
+        <div class="info">
+            <strong>📍 Status:</strong> Backend deployed! Testing ML risk assessment system.
+        </div>
+
+        <!-- ML Wellness Widget -->
+        <div id="ml-wellness-widget"></div>
+
+        <!-- Demo Controls -->
+        <div class="demo-section">
+            <div class="demo-title">🧪 Test Risk Assessment</div>
+            
+            <button class="btn" onclick="testCalculateRisk()">
+                Calculate Risk Score
+            </button>
+
+            <button class="btn" onclick="testGetRiskScore()">
+                Get Latest Risk Score
+            </button>
+
+            <button class="btn" onclick="testWithMockData()">
+                Test with Mock Low Mood Data
+            </button>
+
+            <div id="result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="demo-section">
+            <div class="demo-title">📊 System Info</div>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.8;">
+                <strong>Backend:</strong> AWS Lambda Functions<br>
+                <strong>Features Analyzed:</strong> 49 (Mood, Behavioral, Sentiment)<br>
+                <strong>Risk Levels:</strong> 5 (Minimal, Low, Moderate, High, Critical)<br>
+                <strong>Auto-refresh:</strong> Every 5 minutes
+            </p>
+        </div>
+    </div>
+
+    <script src="ml-wellness-widget.js"></script>
+    <script>
+        // Lambda Function URLs
+        const CALCULATE_RISK_URL = 'https://a5ttrfkhcr76hqo546gp3slfli0bkhlw.lambda-url.us-east-1.on.aws/';
+        const USER_ID = 'demo-user-' + Date.now();
+
+        // Initialize widget (will show "No Data" initially)
+        // Note: Widget expects API format, we'll adapt it
+        window.onload = () => {
+            console.log('ML Integration Demo loaded');
+            console.log('User ID:', USER_ID);
+        };
+
+        async function testCalculateRisk() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Calculating risk score...\n\nThis may take 5-10 seconds as it extracts 49 features...';
+
+            try {
+                const response = await fetch(CALCULATE_RISK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: USER_ID
+                    })
+                });
+
+                const data = await response.json();
+                
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+
+                if (data.ok) {
+                    alert(`✅ Risk Assessment Complete!\n\nRisk Level: ${data.riskLevel}\nRisk Score: ${data.riskScore.toFixed(2)}\n\n${data.riskFactors ? data.riskFactors.join('\n') : ''}`);
+                }
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}\n\n${error.stack}`;
+                console.error('Error:', error);
+            }
+        }
+
+        async function testGetRiskScore() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Getting latest risk score...';
+
+            try {
+                // Since getRiskScore Lambda doesn't exist yet, we'll show a message
+                resultDiv.textContent = 'Note: getRiskScore endpoint not yet deployed.\n\nUse "Calculate Risk Score" to generate a new assessment.';
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+                console.error('Error:', error);
+            }
+        }
+
+        async function testWithMockData() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Testing with mock low mood data...\n\nNote: This will calculate risk based on existing data in DynamoDB.\nFor a full test, first log some moods in the main app.';
+
+            setTimeout(() => {
+                testCalculateRisk();
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
