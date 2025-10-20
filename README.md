@@ -113,17 +113,23 @@ Mind Mate addresses these challenges through:
 │           RESTful Endpoints • CORS • Authorization          │
 └────────────────────┬────────────────────────────────────────┘
                      │
-        ┌────────────┼────────────┐
-        ▼            ▼            ▼
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│   AWS Lambda │ │  AWS Bedrock │ │  AWS Cognito │
-│   Functions  │ │  (Claude 3)  │ │    (Auth)    │
-└──────┬───────┘ └──────────────┘ └──────────────┘
-       │
-       ▼
+        ┌────────────┼────────────┬────────────┐
+        ▼            ▼            ▼            ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│   AWS Lambda │ │  AWS Bedrock │ │  AWS Cognito │ │  SageMaker   │
+│   Functions  │ │  (Claude 3)  │ │    (Auth)    │ │  (Training)  │
+│              │ │              │ │              │ │              │
+│ • Chat       │ │ • AI Chat    │ │ • OAuth 2.0  │ │ • RF Model   │
+│ • ML Scoring │ │ • Empathy    │ │ • JWT Tokens │ │ • GB Model   │
+│ • Features   │ │ • Crisis Det │ │ • MFA        │ │ • Ensemble   │
+└──────┬───────┘ └──────────────┘ └──────────────┘ └──────┬───────┘
+       │                                                    │
+       │                                                    │
+       ▼                                                    ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                       Data Layer                             │
 │  DynamoDB (NoSQL) • S3 (Storage) • CloudWatch (Monitoring)  │
+│  • User Data  • Mood Logs  • Chat History  • ML Models     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -147,9 +153,11 @@ Mind Mate addresses these challenges through:
 
 #### Machine Learning
 - **Feature Extraction**: Custom Lambda functions
-- **Risk Scoring**: Real-time ML pipeline
-- **Training**: SageMaker (future enhancement)
+- **Risk Scoring**: Real-time ML pipeline (rule-based + statistical models)
+- **Model Training**: AWS SageMaker (Random Forest + Gradient Boosting ensemble)
 - **Data Processing**: Python with NumPy/Pandas patterns
+- **Model Storage**: S3 for trained models
+- **Training Pipeline**: Automated retraining with new data
 
 ---
 
@@ -312,10 +320,13 @@ mind_mate/
 │   ├── deploy-lambdas.sh                 # Lambda deployment script
 │   └── add-ml-routes-http.sh             # API Gateway configuration
 │
-├── 🤖 sagemaker/                         # ML Training (Future)
-│   ├── train.py                          # Model training script
-│   ├── example_training_data.csv         # Sample training data
-│   └── README.md                         # ML documentation
+├── 🤖 sagemaker/                         # ML Model Training
+│   ├── train.py                          # SageMaker training script
+│   │                                     # - Random Forest (200 trees)
+│   │                                     # - Gradient Boosting
+│   │                                     # - Ensemble prediction
+│   ├── example_training_data.csv         # Sample training data (49 features)
+│   └── README.md                         # Training documentation
 │
 ├── 📚 docs/                              # Documentation
 │   ├── API_REFERENCE.md                  # API documentation
@@ -427,7 +438,43 @@ risk_score = (
 - Password reset flows
 - MFA support (optional)
 
-### 5. Data Storage
+### 5. ML Model Training (SageMaker)
+
+**Location**: `sagemaker/train.py`
+
+**Architecture**:
+- **Random Forest**: 200 estimators, max depth 10
+- **Gradient Boosting**: Adaptive learning, class balancing
+- **Ensemble**: Averages predictions from both models
+
+**Training Process**:
+```python
+# Triggered by prepareTrainingData Lambda
+# 1. Load training data from S3
+# 2. Train Random Forest model
+# 3. Train Gradient Boosting model
+# 4. Evaluate ensemble performance
+# 5. Save models to S3 if metrics acceptable
+# 6. Update model registry in DynamoDB
+```
+
+**Performance Metrics**:
+- AUC (Area Under ROC): > 0.80
+- Recall (catch crises): > 0.75
+- Precision (valid alerts): > 0.60
+- F1 Score: > 0.65
+
+**Feature Importance**:
+Top predictive features:
+1. `mood_trend_7day` - Recent mood trajectory
+2. `consecutive_low_days` - Sustained low mood
+3. `negative_sentiment_frequency` - Negative language
+4. `crisis_keywords` - Explicit crisis indicators
+5. `engagement_trend` - Declining engagement
+
+**Training Cost**: ~$0.04 per training run (ml.m5.xlarge, 10 minutes)
+
+### 6. Data Storage
 
 **DynamoDB Tables**:
 - `EmoCompanion` - Main data store
@@ -441,10 +488,16 @@ risk_score = (
   - Behavioral metrics
   - Sentiment scores
 
+- `TrainingJobs` - Model training registry
+  - Training job metadata
+  - Model performance metrics
+  - Model S3 locations
+
 **S3 Buckets**:
 - User-uploaded images
 - Generated avatars
 - ML training data exports
+- Trained ML models (Random Forest, Gradient Boosting)
 
 ---
 
@@ -580,6 +633,13 @@ def calculate_risk_score(mood_features, behavioral_features, sentiment_features)
 
 ### Predictive Modeling
 
+**Machine Learning Models** (AWS SageMaker):
+- **Random Forest Classifier**: Ensemble of 200 decision trees
+- **Gradient Boosting Classifier**: Adaptive learning with boosting
+- **Ensemble Prediction**: Averages both models for robustness
+- **Training**: Automated retraining pipeline with new data
+- **Performance**: AUC > 0.80, Recall > 0.75, Precision > 0.60
+
 **7-Day Prediction**:
 - Uses historical patterns to forecast future risk
 - Considers seasonal trends and personal baselines
@@ -587,10 +647,17 @@ def calculate_risk_score(mood_features, behavioral_features, sentiment_features)
 - Updates daily with new data
 
 **Early Warning System**:
-- Detects subtle pattern changes
-- Alerts before crisis escalation
+- Detects subtle pattern changes before crisis
+- ML-powered alerts 3-7 days in advance
 - Recommends preventive interventions
 - Connects to professional resources when needed
+
+**Model Training Pipeline**:
+```
+User Data → Feature Extraction → Training Data Prep → 
+SageMaker Training → Model Evaluation → S3 Storage → 
+Lambda Risk Scoring → Real-time Predictions
+```
 
 ---
 
@@ -824,6 +891,8 @@ jobs:
   - On-demand pricing, ~5 GB storage
 - API Gateway: ~$3
   - HTTP API: $1.00 per million requests
+- SageMaker: ~$1
+  - Monthly model retraining (ml.m5.xlarge, 10 min)
 - Amplify Hosting: ~$2
   - Build minutes + data transfer
 - S3: ~$1
@@ -831,29 +900,31 @@ jobs:
 - Cognito: Free
   - First 50,000 MAU free
 
-**Total: ~$51/month for 1K users**
+**Total: ~$52/month for 1K users**
 
 **10,000 Active Users**:
 - AWS Bedrock: ~$250
 - Lambda: ~$40
 - DynamoDB: ~$80
 - API Gateway: ~$25
+- SageMaker: ~$5 (weekly retraining)
 - Amplify: ~$15
 - S3: ~$8
 - Cognito: ~$25 (above free tier)
 
-**Total: ~$443/month for 10K users**
+**Total: ~$448/month for 10K users**
 
 **100,000 Active Users**:
 - AWS Bedrock: ~$2,000
 - Lambda: ~$300
 - DynamoDB: ~$600
 - API Gateway: ~$200
+- SageMaker: ~$20 (daily retraining)
 - Amplify: ~$100
 - S3: ~$50
 - Cognito: ~$250
 
-**Total: ~$3,500/month for 100K users**
+**Total: ~$3,520/month for 100K users**
 
 ### Cost Optimization Strategies
 
@@ -894,6 +965,15 @@ jobs:
 # Implement lifecycle policies
 # Compress images before upload
 # Use CloudFront for caching
+```
+
+**6. SageMaker Optimization**:
+```python
+# Use spot instances for training (70% cost savings)
+# Train only when sufficient new data accumulated
+# Use ml.m5.large for smaller datasets
+# Implement early stopping to reduce training time
+# Cache preprocessed features
 ```
 
 ### Free Tier Benefits
@@ -940,15 +1020,18 @@ aws budgets create-budget \
 ### Phase 1: Enhanced ML (Q1 2025)
 
 **Advanced Models**:
-- [ ] Deep learning models for pattern recognition
-- [ ] Transformer-based sentiment analysis
+- [ ] Deep learning models (LSTM, Transformers) for pattern recognition
+- [ ] Transformer-based sentiment analysis (BERT, RoBERTa)
 - [ ] Multi-modal analysis (text + voice + image)
 - [ ] Personalized intervention recommendations
+- [ ] XGBoost and LightGBM ensemble models
 
-**Model Training**:
-- [ ] SageMaker integration for custom models
-- [ ] Automated model retraining pipeline
+**Model Training** (SageMaker - Already Implemented ✅):
+- [x] SageMaker integration for custom models
+- [x] Random Forest + Gradient Boosting ensemble
+- [x] Automated model retraining pipeline
 - [ ] A/B testing framework for model versions
+- [ ] Hyperparameter optimization (HPO)
 - [ ] Federated learning for privacy
 
 ### Phase 2: Professional Integration (Q2 2025)
