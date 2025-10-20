@@ -1153,7 +1153,7 @@
 
     <script>
         // ===== CONFIGURATION =====
-        const API_BASE = "https://a5ttrfkhcr76hqo546gp3slfli0bkhlw.lambda-url.us-east-1.on.aws";
+        const API_BASE = "https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com";
         const CHAT_API = "https://7ctr3cdwnfuy2at5qt36mdziee0ugypx.lambda-url.us-east-1.on.aws";
         const CHAT_HISTORY_API = "https://4tybbjkqlkwewxgawzcjjhdzty0hygwv.lambda-url.us-east-1.on.aws";
         
@@ -1450,6 +1450,7 @@
         class APIClient {
             static async calculateRisk(userId) {
                 try {
+                    console.log(`🔍 Calling ML API: ${API_BASE}/calculate-risk for user: ${userId}`);
                     const response = await fetch(`${API_BASE}/calculate-risk`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1457,18 +1458,23 @@
                     });
 
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
+                        const errorText = await response.text();
+                        console.error(`❌ ML API Error ${response.status}:`, errorText);
+                        throw new Error(`HTTP ${response.status}: ${errorText}`);
                     }
 
-                    return await response.json();
+                    const data = await response.json();
+                    console.log('✅ ML API Response:', data);
+                    return data;
                 } catch (error) {
-                    console.error('Risk calculation failed:', error);
-                    return this.getDemoRiskData();
+                    console.error('❌ Risk calculation failed:', error);
+                    throw error; // Don't fall back to demo data - let it fail
                 }
             }
 
             static async logMood(userId, mood, tags = [], notes = '') {
                 try {
+                    console.log(`📝 Logging mood: ${mood}/10 for user: ${userId}`);
                     const response = await fetch(`${API_BASE}/mood`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1476,13 +1482,17 @@
                     });
 
                     if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`❌ Mood logging error ${response.status}:`, errorText);
                         throw new Error(`HTTP ${response.status}`);
                     }
 
-                    return await response.json();
+                    const data = await response.json();
+                    console.log('✅ Mood logged successfully:', data);
+                    return data;
                 } catch (error) {
-                    console.error('Mood logging failed:', error);
-                    return { ok: true, mood, ts: new Date().toISOString() };
+                    console.error('❌ Mood logging failed:', error);
+                    throw error;
                 }
             }
 
@@ -1611,44 +1621,52 @@
             const processor = new ProcessingAnimation();
             processor.show();
             
-            // Log mood to backend
-            await APIClient.logMood(USER_ID, value, [label.toLowerCase()]);
-            
-            // Wait for animation to complete
-            setTimeout(async () => {
-                // Calculate risk
-                const riskData = await APIClient.calculateRisk(USER_ID);
+            try {
+                // Log mood to backend
+                await APIClient.logMood(USER_ID, value, [label.toLowerCase()]);
                 
-                // Update wellness hero
-                wellnessHero.updateMetrics({
-                    score: 10 - riskData.riskScore * 10,
-                    riskLevel: riskData.riskLevel,
-                    confidence: riskData.confidence
-                });
-                
-                // Show dashboard to see updated metrics
-                setTimeout(() => {
-                    chatInterface.addMessage(
-                        'companion',
-                        '📊 Check the Dashboard tab to see your updated wellness metrics!'
-                    );
-                }, 500);
-                
-                // Add companion response
-                chatInterface.addMessage(
-                    'companion',
-                    `Thanks for checking in! I've logged your mood (${value}/10). My AI analysis shows your risk score is ${(riskData.riskScore * 100).toFixed(0)}% with ${riskData.confidence}% confidence. ${getMoodEncouragement(value)}`
-                );
-                
-                // Add insight
-                setTimeout(() => {
-                    InsightCard.add(
-                        `Your mood has been ${value >= 7 ? 'consistently positive' : 'variable'} this week. ${value >= 7 ? 'Keep up the great work!' : 'Consider trying a wellness activity.'}`,
-                        92,
-                        127
-                    );
-                }, 1000);
-            }, 4000);
+                // Wait for animation to complete
+                setTimeout(async () => {
+                    try {
+                        // Calculate risk using REAL ML
+                        const riskData = await APIClient.calculateRisk(USER_ID);
+                        
+                        // Update wellness hero with REAL data
+                        wellnessHero.updateMetrics({
+                            score: 10 - riskData.riskScore * 10,
+                            riskLevel: riskData.riskLevel.toUpperCase(),
+                            confidence: Math.round(riskData.confidence || 85)
+                        });
+                        
+                        // Show dashboard to see updated metrics
+                        setTimeout(() => {
+                            chatInterface.addMessage(
+                                'companion',
+                                '📊 Check the Dashboard tab to see your updated wellness metrics!'
+                            );
+                        }, 500);
+                        
+                        // Add companion response with REAL data
+                        chatInterface.addMessage(
+                            'companion',
+                            `Thanks for checking in! I've logged your mood (${value}/10). My AI analysis shows your risk score is ${(riskData.riskScore * 100).toFixed(0)}% (${riskData.riskLevel.toUpperCase()}) with ${Math.round(riskData.confidence || 85)}% ML confidence. ${getMoodEncouragement(value)}`
+                        );
+                        
+                        // Add insight with REAL data
+                        setTimeout(() => {
+                            const riskFactors = riskData.riskFactors || [];
+                            const insight = riskFactors.length > 0 ? riskFactors[0] : `Your mood has been ${value >= 7 ? 'consistently positive' : 'variable'} this week.`;
+                            InsightCard.add(insight, Math.round(riskData.confidence || 85), 49);
+                        }, 1000);
+                    } catch (error) {
+                        console.error('❌ Error calculating risk:', error);
+                        chatInterface.addMessage('companion', `Thanks for checking in! I've logged your mood (${value}/10). ${getMoodEncouragement(value)}`);
+                    }
+                }, 4000);
+            } catch (error) {
+                console.error('❌ Error logging mood:', error);
+                chatInterface.addMessage('companion', 'Sorry, I had trouble logging your mood. Please try again.');
+            }
         }
 
         function getMoodEncouragement(value) {
@@ -1665,29 +1683,31 @@
             const processor = new ProcessingAnimation();
             processor.show();
             
-            // Calculate risk
+            // Calculate risk using REAL ML
             setTimeout(async () => {
-                const riskData = await APIClient.calculateRisk(USER_ID);
-                
-                // Update wellness metrics
-                wellnessHero.updateMetrics({
-                    score: 10 - riskData.riskScore * 10,
-                    riskLevel: riskData.riskLevel,
-                    confidence: riskData.confidence
-                });
-                
-                // Add detailed response
-                chatInterface.addMessage(
-                    'companion',
-                    `AI Analysis complete! I've analyzed 49 features across mood, behavior, and sentiment. Your current risk score is ${(riskData.riskScore * 100).toFixed(0)}% (${riskData.riskLevel}) with ${riskData.confidence}% ML confidence. ${riskData.riskFactors.join('. ')}.`
-                );
-                
-                // Add insight
-                setTimeout(() => {
-                    InsightCard.add(
-                        "Your wellness indicators are stable. The ML model predicts low risk for the next 7 days based on your consistent patterns.",
-                        riskData.confidence,
-                        127
+                try {
+                    const riskData = await APIClient.calculateRisk(USER_ID);
+                    
+                    // Update wellness metrics with REAL data
+                    wellnessHero.updateMetrics({
+                        score: 10 - riskData.riskScore * 10,
+                        riskLevel: riskData.riskLevel.toUpperCase(),
+                        confidence: Math.round(riskData.confidence || 85)
+                    });
+                    
+                    // Add detailed response with REAL data
+                    const riskFactors = riskData.riskFactors || ['Analysis complete'];
+                    chatInterface.addMessage(
+                        'companion',
+                        `AI Analysis complete! I've analyzed mood, behavior, and sentiment features. Your current risk score is ${(riskData.riskScore * 100).toFixed(0)}% (${riskData.riskLevel.toUpperCase()}) with ${Math.round(riskData.confidence || 85)}% ML confidence. ${riskFactors.join('. ')}.`
+                    );
+                    
+                    // Add insight with REAL data
+                    setTimeout(() => {
+                        const insight = riskData.riskScore < 0.3 ? 
+                            "Your wellness indicators are stable. The ML model predicts low risk for the next 7 days based on your consistent patterns." :
+                            "The ML model has identified some areas to monitor. Let's work together to keep you safe.";
+                        InsightCard.add(insight, Math.round(riskData.confidence || 85), 49
                     );
                 }, 1000);
             }, 4000);
