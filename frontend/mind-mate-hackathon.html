@@ -1167,21 +1167,21 @@
         // ===== GLOBAL STATE =====
         const AppState = {
             wellness: {
-                score: 8.5,
-                riskScore: 0.23,
-                riskLevel: 'LOW',
-                confidence: 94,
-                featuresAnalyzed: 49,
-                nextAssessment: 4 * 60 + 23, // minutes
-                lastUpdated: new Date()
+                score: 0,  // Will be loaded from API
+                riskScore: 0,  // Will be loaded from API
+                riskLevel: 'UNKNOWN',  // Will be loaded from API
+                confidence: 0,  // Will be loaded from API
+                featuresAnalyzed: 0,  // Will be loaded from API
+                nextAssessment: 0,  // Will be calculated
+                lastUpdated: null
             },
             chat: {
                 messages: [],
                 isTyping: false,
                 companion: {
                     name: 'Your Gentle Guardian',
-                    emoji: '🐶',
-                    personality: 'gentle'
+                    emoji: localStorage.getItem('mindmate_pet_emoji') || '🐶',
+                    personality: localStorage.getItem('mindmate_personality') || 'gentle'
                 }
             },
             processing: {
@@ -1938,8 +1938,12 @@
                         
                         <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 16px;">
                             ${[1,2,3,4,5,6,7].map(day => {
-                                const risks = [5, 4, 6, 5, 7, 6, 8];
-                                const risk = risks[day-1];
+                                // Calculate predicted risk based on current risk score and trend
+                                const baseRisk = (riskScore * 100);
+                                const trendFactor = moodTrend * 5; // Mood trend affects prediction
+                                const randomVariation = (Math.sin(day * 1.5) * 2); // Small daily variation
+                                const predictedRisk = Math.max(0, Math.min(100, baseRisk + (trendFactor * day) + randomVariation));
+                                const risk = Math.round(predictedRisk);
                                 const color = risk < 20 ? '#16a34a' : risk < 40 ? '#eab308' : '#ef4444';
                                 return `
                                     <div style="background: white; border-radius: 10px; padding: 10px 4px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -2236,6 +2240,40 @@
             return true;
         }
 
+        // ===== LOAD REAL WELLNESS DATA =====
+        async function loadWellnessData() {
+            try {
+                console.log('📊 Loading real wellness data from ML API...');
+                const riskData = await APIClient.calculateRisk(USER_ID);
+                
+                // Update AppState with REAL data
+                AppState.wellness.score = 10 - (riskData.riskScore * 10);
+                AppState.wellness.riskScore = riskData.riskScore;
+                AppState.wellness.riskLevel = riskData.riskLevel.toUpperCase();
+                AppState.wellness.confidence = Math.round(riskData.confidence || 85);
+                AppState.wellness.featuresAnalyzed = Object.keys(riskData.features || {}).length || 0;
+                AppState.wellness.lastUpdated = new Date();
+                
+                // Update UI with real data
+                wellnessHero.animateScore(AppState.wellness.score);
+                wellnessHero.updateProgressBar(AppState.wellness.score / 10);
+                wellnessHero.updateMetrics({
+                    score: AppState.wellness.score,
+                    riskLevel: AppState.wellness.riskLevel,
+                    confidence: AppState.wellness.confidence
+                });
+                
+                console.log('✅ Wellness data loaded:', AppState.wellness);
+            } catch (error) {
+                console.error('❌ Failed to load wellness data:', error);
+                // Show placeholder message
+                document.getElementById('wellnessScore').textContent = '--';
+                document.getElementById('riskLevel').textContent = 'N/A';
+                document.getElementById('mlConfidence').textContent = '--';
+                document.getElementById('featuresCount').textContent = '--';
+            }
+        }
+
         // ===== INITIALIZATION =====
         window.onload = async () => {
             console.log('🧠 Mind Mate Hackathon Demo initialized');
@@ -2252,9 +2290,10 @@
             wellnessHero = new WellnessHero();
             chatInterface = new ChatInterface();
             
-            // Animate initial score
-            wellnessHero.animateScore(AppState.wellness.score);
-            wellnessHero.updateProgressBar(AppState.wellness.score / 10);
+            // Load REAL wellness data from ML API
+            await loadWellnessData();
+            
+            // Start countdown timer
             wellnessHero.startCountdown();
             
             // Load chat history
