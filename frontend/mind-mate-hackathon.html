@@ -2118,9 +2118,29 @@
             }
         }
 
+        // ===== AUTHENTICATION CHECK =====
+        function checkAuthentication() {
+            // Check if user has completed onboarding and has auth token
+            const token = localStorage.getItem('mindmate_token');
+            const onboardingComplete = localStorage.getItem('mindmate_onboardingComplete');
+            
+            if (!token || onboardingComplete !== 'true') {
+                // Redirect to onboarding/login page
+                window.location.href = '/onboarding.html';
+                return false;
+            }
+            return true;
+        }
+
         // ===== INITIALIZATION =====
         window.onload = async () => {
             console.log('🧠 Mind Mate Hackathon Demo initialized');
+            
+            // Check authentication first
+            if (!checkAuthentication()) {
+                return; // Stop initialization if not authenticated
+            }
+            
             checkOnboarding();
             console.log('👤 User ID:', USER_ID);
             

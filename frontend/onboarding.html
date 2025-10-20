@@ -577,7 +577,7 @@
                         if (data.profile && data.profile.hasPassword) {
                             // User has already set password, check onboarding
                             if (data.profile.onboardingComplete) {
-                                window.location.href = '/app.html';
+                                window.location.href = '/mind-mate-hackathon.html';
                             } else {
                                 showScreen('personalityScreen');
                             }
@@ -816,7 +816,7 @@
                         const data = await response.json();
                         
                         if (data.profile && data.profile.onboardingComplete) {
-                            window.location.href = '/app.html';
+                            window.location.href = '/mind-mate-hackathon.html';
                         } else {
                             showScreen('personalityScreen');
                         }
@@ -848,7 +848,7 @@
                 const onboardingComplete = localStorage.getItem('mindmate_onboardingComplete');
                 
                 if (token && onboardingComplete === 'true') {
-                    window.location.href = '/app.html';
+                    window.location.href = '/mind-mate-hackathon.html';
                 }
             }
         };
