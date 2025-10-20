@@ -1401,6 +1401,22 @@
                 const typing = document.getElementById('typingIndicator');
                 if (typing) typing.remove();
             }
+            
+            reset() {
+                // Clear all messages from UI
+                this.container.innerHTML = '';
+                
+                // Clear messages from state
+                AppState.chat.messages = [];
+                
+                // Add welcome message
+                this.addMessage('companion', 
+                    "Hi! I'm your AI companion. How are you feeling today?",
+                    { isWelcome: true }
+                );
+                
+                console.log('✅ Chat interface reset');
+            }
         }
 
         // ===== INSIGHT CARD CLASS =====
@@ -1697,7 +1713,57 @@
         }
 
         function showSettings() {
-            alert('Settings feature coming soon! This would allow you to customize your AI companion personality and notification preferences.');
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">⚙️ Settings</h2>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    </div>
+                    <div style="padding: 20px 0;">
+                        <button onclick="resetChat()" style="width: 100%; padding: 16px; background: #f87171; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px;">
+                            🗑️ Reset Chat History
+                        </button>
+                        <button onclick="clearAllData()" style="width: 100%; padding: 16px; background: #ef4444; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px;">
+                            ⚠️ Clear All Data & Logout
+                        </button>
+                        <p style="font-size: 13px; color: #64748b; margin-top: 16px; line-height: 1.6;">
+                            Reset chat will clear your conversation history but keep your account. Clear all data will log you out and remove all local data.
+                        </p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function resetChat() {
+            if (confirm('Are you sure you want to reset the chat? This will clear all conversation history.')) {
+                // Use ChatInterface reset method
+                if (chatInterface) {
+                    chatInterface.reset();
+                }
+                
+                // Close modal
+                document.querySelector('.modal-overlay')?.remove();
+                
+                // Show success message
+                setTimeout(() => {
+                    alert('✅ Chat history has been reset!');
+                }, 100);
+                
+                console.log('✅ Chat reset complete');
+            }
+        }
+        
+        function clearAllData() {
+            if (confirm('⚠️ This will log you out and clear ALL data. Are you sure?')) {
+                // Clear all localStorage
+                localStorage.clear();
+                
+                // Redirect to login
+                window.location.href = '/onboarding.html';
+            }
         }
 
         function switchTab(tabName) {
