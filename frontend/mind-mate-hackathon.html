@@ -932,7 +932,14 @@
         // ===== CONFIGURATION =====
         const API_BASE = "https://a5ttrfkhcr76hqo546gp3slfli0bkhlw.lambda-url.us-east-1.on.aws";
         const CHAT_API = "https://7ctr3cdwnfuy2at5qt36mdziee0ugypx.lambda-url.us-east-1.on.aws";
-        const USER_ID = "hackathon-demo-" + Date.now();
+        const CHAT_HISTORY_API = "https://4tybbjkqlkwewxgawzcjjhdzty0hygwv.lambda-url.us-east-1.on.aws";
+        
+        // Use consistent user ID (stored in localStorage)
+        const USER_ID = localStorage.getItem('mindmate_user_id') || (() => {
+            const id = "hackathon-demo-" + Date.now();
+            localStorage.setItem('mindmate_user_id', id);
+            return id;
+        })();
         
         // ===== GLOBAL STATE =====
         const AppState = {
@@ -1789,8 +1796,41 @@
             }
         }
 
+        // ===== LOAD CHAT HISTORY =====
+        async function loadChatHistory() {
+            try {
+                console.log('📚 Loading chat history for user:', USER_ID);
+                
+                const response = await fetch(`${CHAT_HISTORY_API}?userId=${USER_ID}`);
+                
+                if (!response.ok) {
+                    console.warn('Failed to load chat history:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log(`✅ Loaded ${data.count} messages from history`);
+                
+                // Populate AppState with historical messages
+                if (data.messages && data.messages.length > 0) {
+                    AppState.chat.messages = data.messages;
+                    
+                    // Render messages in UI
+                    data.messages.forEach(msg => {
+                        chatInterface.renderMessage(msg);
+                    });
+                    
+                    scrollToBottom();
+                }
+                
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                // Continue without history - not critical
+            }
+        }
+
         // ===== INITIALIZATION =====
-        window.onload = () => {
+        window.onload = async () => {
             console.log('🧠 Mind Mate Hackathon Demo initialized');
             console.log('👤 User ID:', USER_ID);
             
@@ -1803,7 +1843,8 @@
             wellnessHero.updateProgressBar(AppState.wellness.score / 10);
             wellnessHero.startCountdown();
             
-            // Chat starts empty - user initiates conversation
+            // Load chat history
+            await loadChatHistory();
             
             console.log('✅ All systems ready!');
         };
