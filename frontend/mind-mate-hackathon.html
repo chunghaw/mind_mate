@@ -1823,7 +1823,9 @@
             const getDayLabel = (offset) => {
                 const date = new Date(today);
                 date.setDate(date.getDate() + offset);
-                return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
+                const day = date.getDate();
+                return `${weekday}<br>${day}`;
             };
             
             // Tooltip helper function
@@ -1934,16 +1936,16 @@
                         </div>
                         <p style="margin: 0 0 20px 0; font-size: 15px; color: #64748b;">Based on your patterns, here's what we predict for the coming week:</p>
                         
-                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px;">
+                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 16px;">
                             ${[1,2,3,4,5,6,7].map(day => {
                                 const risks = [5, 4, 6, 5, 7, 6, 8];
                                 const risk = risks[day-1];
                                 const color = risk < 20 ? '#16a34a' : risk < 40 ? '#eab308' : '#ef4444';
                                 return `
-                                    <div style="background: white; border-radius: 12px; padding: 12px 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                                        <div style="font-size: 10px; color: #64748b; margin-bottom: 4px; font-weight: 600;">${getDayLabel(day)}</div>
-                                        <div style="font-size: 24px; font-weight: 700; color: ${color}; margin-bottom: 4px;">${risk}%</div>
-                                        <div style="font-size: 9px; color: #64748b;">Risk</div>
+                                    <div style="background: white; border-radius: 10px; padding: 10px 4px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                        <div style="font-size: 9px; color: #64748b; margin-bottom: 6px; font-weight: 600; line-height: 1.2;">${getDayLabel(day)}</div>
+                                        <div style="font-size: 20px; font-weight: 700; color: ${color}; margin-bottom: 2px;">${risk}%</div>
+                                        <div style="font-size: 8px; color: #64748b;">Risk</div>
                                     </div>
                                 `;
                             }).join('')}
