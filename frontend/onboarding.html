@@ -278,7 +278,8 @@
         }
 
         input[type="email"],
-        input[type="password"] {
+        input[type="password"],
+        input[type="text"] {
             width: 100%;
             padding: 14px;
             border: 2px solid #d1fae5;
@@ -289,7 +290,8 @@
         }
 
         input[type="email"]:focus,
-        input[type="password"]:focus {
+        input[type="password"]:focus,
+        input[type="text"]:focus {
             outline: none;
             border-color: #86efac;
         }
@@ -378,14 +380,16 @@
                 <div id="setPasswordError" class="error" style="display: none;"></div>
                 
                 <div class="input-group">
-                    <label class="input-label">Choose a Username</label>
-                    <input type="text" id="newUsername" placeholder="username (not email)">
-                    <small style="color: #64748b; font-size: 12px;">This will be your login username</small>
+                    <label class="input-label">Create Login Username</label>
+                    <input type="text" id="newUsername" placeholder="Username">
                 </div>
                 
                 <div class="input-group">
                     <label class="input-label">Create Password</label>
                     <input type="password" id="newPassword" placeholder="At least 8 characters">
+                    <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
+                        Must include: uppercase, lowercase, and number
+                    </small>
                 </div>
                 
                 <button class="btn btn-primary" onclick="setPassword()">Continue</button>
@@ -465,13 +469,13 @@
     <script>
         // Cognito Configuration
         const poolData = {
-            UserPoolId: 'us-east-1_0xN9Gguz1',
-            ClientId: '2ck4nnkj2c5sd7qsnuc1r1kbrm'
+            UserPoolId: 'us-east-1_lWwId4NJq',
+            ClientId: '5jkgbuofrsmrhme6iqtbc2c748'
         };
         const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
         const COGNITO_DOMAIN = 'mindmate-403745271636.auth.us-east-1.amazoncognito.com';
-        const REDIRECT_URI = window.location.origin + window.location.pathname;
-        const API_BASE = 'https://emo-companion-api.execute-api.us-east-1.amazonaws.com/prod';
+        const REDIRECT_URI = window.location.origin + '/';
+        const API_BASE = 'https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com';
 
         // Onboarding State
         let selectedPersonality = null;
@@ -577,7 +581,7 @@
                         if (data.profile && data.profile.hasPassword) {
                             // User has already set password, check onboarding
                             if (data.profile.onboardingComplete) {
-                                window.location.href = '/mind-mate-hackathon.html';
+                                window.location.href = '/app.html';
                             } else {
                                 showScreen('personalityScreen');
                             }
@@ -617,9 +621,22 @@
                 return;
             }
             
+            // Validate password requirements
+            const hasUppercase = /[A-Z]/.test(password);
+            const hasLowercase = /[a-z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            
+            if (!hasUppercase || !hasLowercase || !hasNumber) {
+                showError('setPasswordError', 'Password must include uppercase, lowercase, and number');
+                return;
+            }
+            
             try {
                 const token = localStorage.getItem('mindmate_token');
                 const userId = localStorage.getItem('mindmate_userId');
+                
+                console.log('Token:', token ? token.substring(0, 50) + '...' : 'NO TOKEN');
+                console.log('UserId:', userId);
                 
                 // Call backend to set password for Cognito user
                 const response = await fetch(`${API_BASE}/set-password`, {
@@ -629,21 +646,26 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ 
+                        userId: userId,
                         username: username,
                         password: password
                     })
                 });
                 
-                const data = await response.json();
+                console.log('Response status:', response.status);
+                const responseText = await response.text();
+                console.log('Response body:', responseText);
                 
-                if (data.ok) {
+                const data = JSON.parse(responseText);
+                
+                if (response.ok && data.ok) {
                     // Store username locally
                     localStorage.setItem('mindmate_username', username);
                     
                     // Continue to personality selection
                     showScreen('personalityScreen');
                 } else {
-                    showError('setPasswordError', data.error || 'Failed to set password');
+                    showError('setPasswordError', data.error || data.message || 'Failed to set password');
                 }
             } catch (error) {
                 console.error('Set password error:', error);
@@ -775,12 +797,12 @@
                 localStorage.setItem('mindmate_onboardingComplete', 'true');
                 
                 // Redirect to main app
-                window.location.href = '/mind-mate-hackathon.html';
+                window.location.href = '/app.html';
             } catch (error) {
                 console.error('Error completing onboarding:', error);
                 // Still redirect even if API fails
                 localStorage.setItem('mindmate_onboardingComplete', 'true');
-                window.location.href = '/mind-mate-hackathon.html';
+                window.location.href = '/app.html';
             }
         }
 
@@ -816,7 +838,7 @@
                         const data = await response.json();
                         
                         if (data.profile && data.profile.onboardingComplete) {
-                            window.location.href = '/mind-mate-hackathon.html';
+                            window.location.href = '/app.html';
                         } else {
                             showScreen('personalityScreen');
                         }
@@ -848,7 +870,7 @@
                 const onboardingComplete = localStorage.getItem('mindmate_onboardingComplete');
                 
                 if (token && onboardingComplete === 'true') {
-                    window.location.href = '/mind-mate-hackathon.html';
+                    window.location.href = '/app.html';
                 }
             }
         };
