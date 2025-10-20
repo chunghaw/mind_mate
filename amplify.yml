@@ -12,5 +12,9 @@ frontend:
       - '*.html'
       - '*.css'
       - '*.js'
+      - '*.jpeg'
+      - '*.jpg'
+      - '*.png'
+      - '*.svg'
   cache:
     paths: []
