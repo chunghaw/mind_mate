@@ -3,18 +3,10 @@ frontend:
   phases:
     build:
       commands:
-        - echo "Copying frontend files..."
-        - cp -r frontend/* .
-        - ls -la
+        - echo "Build started"
   artifacts:
-    baseDirectory: /
+    baseDirectory: frontend
     files:
-      - '*.html'
-      - '*.css'
-      - '*.js'
-      - '*.jpeg'
-      - '*.jpg'
-      - '*.png'
-      - '*.svg'
+      - '**/*'
   cache:
     paths: []
