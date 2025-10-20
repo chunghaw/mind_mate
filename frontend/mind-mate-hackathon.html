@@ -2124,11 +2124,27 @@
             const token = localStorage.getItem('mindmate_token');
             const onboardingComplete = localStorage.getItem('mindmate_onboardingComplete');
             
+            // Check for demo mode via URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const demoMode = urlParams.get('demo') === 'true';
+            
+            if (demoMode) {
+                console.log('🎭 Running in DEMO mode');
+                // Set demo credentials
+                localStorage.setItem('mindmate_token', 'demo-token');
+                localStorage.setItem('mindmate_onboardingComplete', 'true');
+                localStorage.setItem('mindmate_userId', 'demo-user');
+                return true;
+            }
+            
             if (!token || onboardingComplete !== 'true') {
                 // Redirect to onboarding/login page
+                console.log('❌ No authentication found, redirecting to login...');
                 window.location.href = '/onboarding.html';
                 return false;
             }
+            
+            console.log('✅ Authentication verified');
             return true;
         }
 
