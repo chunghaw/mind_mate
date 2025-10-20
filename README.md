@@ -66,21 +66,21 @@ Mind Mate addresses these challenges through:
 - Crisis intervention protocols
 
 ### 📊 Real-Time Risk Assessment
-- **Machine Learning Pipeline** for mental health risk scoring
+- **Intelligent Risk Scoring System** with ML-ready infrastructure
 - Multi-dimensional analysis:
-  - Mood pattern tracking (7-day trends)
-  - Behavioral change detection
-  - Sentiment analysis
-  - Crisis keyword identification
+  - Mood pattern tracking (7-day trends, volatility, consecutive low days)
+  - Behavioral change detection (engagement decline, check-in frequency)
+  - Sentiment analysis (positive/negative ratios, crisis keywords)
+  - Weighted scoring algorithm (40% mood + 30% behavioral + 30% sentiment)
 - Dynamic risk levels: MINIMAL → LOW → MODERATE → HIGH → CRITICAL
-- Predictive modeling for early intervention
+- SageMaker ML models available for deployment (Random Forest + Gradient Boosting)
 
 ### 🎨 Intelligent Dashboard
 - Real-time wellness score visualization
-- 7-day risk prediction with confidence metrics
-- ML feature importance analysis
+- Risk level monitoring with trend analysis
+- Feature importance breakdown (mood, behavioral, sentiment)
 - Personalized insights and recommendations
-- Historical trend analysis
+- Historical pattern tracking
 
 ### 🔐 Secure Authentication
 - **AWS Cognito** integration
@@ -438,43 +438,72 @@ risk_score = (
 - Password reset flows
 - MFA support (optional)
 
-### 5. ML Model Training (SageMaker)
+### 5. Risk Calculation Engine
+
+**Location**: `backend/lambdas/calculateRiskScore/lambda_function.py`
+
+**Current Implementation** (Rule-Based):
+- **Weighted Scoring Algorithm**: Combines multiple risk signals
+- **Real-time Processing**: Analyzes patterns as they occur
+- **Multi-dimensional Assessment**: 
+  - Mood risk (40% weight): trend, average, volatility, consecutive low days
+  - Behavioral risk (30% weight): engagement, check-in frequency, late-night usage
+  - Sentiment risk (30% weight): negative frequency, crisis keywords, hopelessness
+
+**Risk Calculation**:
+```python
+risk_score = (
+    mood_risk * 0.4 +           # 40% weight
+    behavioral_risk * 0.3 +     # 30% weight
+    sentiment_risk * 0.3        # 30% weight
+)
+
+# Risk Levels:
+# 0.0-0.2: MINIMAL
+# 0.2-0.4: LOW
+# 0.4-0.6: MODERATE
+# 0.6-0.8: HIGH
+# 0.8-1.0: CRITICAL
+```
+
+**Key Risk Factors Detected**:
+1. `mood_mean_7day < 4` - Very low average mood
+2. `mood_trend_7day < -0.2` - Declining mood pattern
+3. `consecutive_low_days >= 3` - Sustained low mood
+4. `negative_sentiment_frequency > 0.6` - High negative language
+5. `crisis_keywords >= 2` - Explicit crisis indicators
+6. `engagement_decline < -0.3` - Withdrawing from app
+
+### 6. ML Model Training (SageMaker - Optional Enhancement)
 
 **Location**: `sagemaker/train.py`
+
+**Status**: Code ready, models not yet trained (see [SAGEMAKER_QUICK_DEPLOY.md](SAGEMAKER_QUICK_DEPLOY.md))
 
 **Architecture**:
 - **Random Forest**: 200 estimators, max depth 10
 - **Gradient Boosting**: Adaptive learning, class balancing
 - **Ensemble**: Averages predictions from both models
 
-**Training Process**:
-```python
-# Triggered by prepareTrainingData Lambda
-# 1. Load training data from S3
-# 2. Train Random Forest model
-# 3. Train Gradient Boosting model
+**Training Process** (15-20 minutes):
+```bash
+# 1. Upload training data to S3
+# 2. Start SageMaker training job
+# 3. Train Random Forest + Gradient Boosting
 # 4. Evaluate ensemble performance
-# 5. Save models to S3 if metrics acceptable
-# 6. Update model registry in DynamoDB
+# 5. Save models to S3
+# 6. Update Lambda to use ML models
 ```
 
-**Performance Metrics**:
+**Expected Performance**:
 - AUC (Area Under ROC): > 0.80
 - Recall (catch crises): > 0.75
 - Precision (valid alerts): > 0.60
 - F1 Score: > 0.65
 
-**Feature Importance**:
-Top predictive features:
-1. `mood_trend_7day` - Recent mood trajectory
-2. `consecutive_low_days` - Sustained low mood
-3. `negative_sentiment_frequency` - Negative language
-4. `crisis_keywords` - Explicit crisis indicators
-5. `engagement_trend` - Declining engagement
-
 **Training Cost**: ~$0.04 per training run (ml.m5.xlarge, 10 minutes)
 
-### 6. Data Storage
+### 7. Data Storage
 
 **DynamoDB Tables**:
 - `EmoCompanion` - Main data store
@@ -633,30 +662,38 @@ def calculate_risk_score(mood_features, behavioral_features, sentiment_features)
 
 ### Predictive Modeling
 
-**Machine Learning Models** (AWS SageMaker):
-- **Random Forest Classifier**: Ensemble of 200 decision trees
-- **Gradient Boosting Classifier**: Adaptive learning with boosting
-- **Ensemble Prediction**: Averages both models for robustness
-- **Training**: Automated retraining pipeline with new data
-- **Performance**: AUC > 0.80, Recall > 0.75, Precision > 0.60
+**Current Implementation** (Rule-Based Intelligent Scoring):
+- **Weighted Risk Algorithm**: Combines mood, behavioral, and sentiment signals
+- **Real-time Analysis**: Processes patterns as they emerge
+- **Multi-factor Assessment**: 49 features analyzed per user
+- **Threshold-based Alerts**: Automatic intervention triggers
+- **Performance**: Reliable risk classification with clear factor attribution
 
-**7-Day Prediction**:
-- Uses historical patterns to forecast future risk
-- Considers seasonal trends and personal baselines
-- Provides confidence intervals
-- Updates daily with new data
+**ML Models Available** (AWS SageMaker - Ready for Deployment):
+- **Random Forest Classifier**: Ensemble of 200 decision trees (coded, ready to train)
+- **Gradient Boosting Classifier**: Adaptive learning with boosting (coded, ready to train)
+- **Ensemble Prediction**: Averages both models for robustness
+- **Training Pipeline**: Automated with SageMaker (see [SAGEMAKER_QUICK_DEPLOY.md](SAGEMAKER_QUICK_DEPLOY.md))
+- **Expected Performance**: AUC > 0.80, Recall > 0.75, Precision > 0.60
+
+**Risk Prediction**:
+- Analyzes historical patterns to assess current risk
+- Considers personal baselines and recent changes
+- Provides clear risk level classification
+- Updates in real-time with new data
 
 **Early Warning System**:
-- Detects subtle pattern changes before crisis
-- ML-powered alerts 3-7 days in advance
-- Recommends preventive interventions
+- Detects subtle pattern changes (mood decline, engagement drop)
+- Flags concerning trends before they escalate
+- Recommends preventive interventions based on risk factors
 - Connects to professional resources when needed
 
-**Model Training Pipeline**:
+**System Architecture**:
 ```
-User Data → Feature Extraction → Training Data Prep → 
-SageMaker Training → Model Evaluation → S3 Storage → 
-Lambda Risk Scoring → Real-time Predictions
+User Data → Feature Extraction (Lambda) → Risk Calculation (Lambda) → 
+Risk Score + Level → Intervention Triggers → User Alerts
+                ↓
+        (Optional: SageMaker ML Models for Enhanced Prediction)
 ```
 
 ---
@@ -1026,10 +1063,11 @@ aws budgets create-budget \
 - [ ] Personalized intervention recommendations
 - [ ] XGBoost and LightGBM ensemble models
 
-**Model Training** (SageMaker - Already Implemented ✅):
-- [x] SageMaker integration for custom models
-- [x] Random Forest + Gradient Boosting ensemble
-- [x] Automated model retraining pipeline
+**Model Training** (SageMaker - Infrastructure Ready):
+- [x] SageMaker training code written
+- [x] Random Forest + Gradient Boosting ensemble coded
+- [x] Feature extraction pipeline implemented
+- [ ] Train models on production data (15-20 min deployment)
 - [ ] A/B testing framework for model versions
 - [ ] Hyperparameter optimization (HPO)
 - [ ] Federated learning for privacy
