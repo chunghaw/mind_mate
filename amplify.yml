@@ -3,10 +3,11 @@ frontend:
   phases:
     build:
       commands:
-        - echo "Building frontend..."
+        - ls -la
+        - ls -la frontend/
   artifacts:
-    baseDirectory: frontend
+    baseDirectory: /
     files:
-      - '**/*'
+      - 'frontend/**/*'
   cache:
     paths: []
