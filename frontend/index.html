@@ -497,25 +497,33 @@
         // Personality Details
         const personalityDetails = {
             gentle: {
+                name: 'Gentle Guardian',
                 emoji: '🐶',
+                desc: 'patience and care',
                 greeting: 'Hi there! I\'m so excited to be your companion! What should I call you?',
                 intro: 'Nice to meet you, {name}! You can call me Buddy. I\'m here to support your mental wellness journey with patience and care.',
                 detail: 'The Gentle Guardian is nurturing and supportive. They speak with warmth and patience, always making you feel heard and validated.'
             },
             playful: {
+                name: 'Playful Pal',
                 emoji: '🐱',
+                desc: 'energy and fun',
                 greeting: 'Hey there! 😊 I\'m SO excited to meet you! What\'s your name?',
                 intro: 'Yay! Hi {name}! 🎉 I\'m Buddy, and I\'m here to make your wellness journey fun and uplifting!',
                 detail: 'The Playful Pal is energetic and fun! They bring positivity and motivation, helping you see the bright side of things.'
             },
             focused: {
+                name: 'Focused Friend',
                 emoji: '🐉',
+                desc: 'clarity and purpose',
                 greeting: 'Greetings. I\'m here to support you. What should I call you?',
                 intro: 'Perfect. Nice to meet you, {name}. I\'m Buddy. Let\'s work together on your mental wellness with clarity and purpose.',
                 detail: 'The Focused Friend is calm and direct. They help you stay mindful and goal-oriented, cutting through the noise.'
             },
             sensitive: {
+                name: 'Sensitive Soul',
                 emoji: '🦊',
+                desc: 'deep empathy',
                 greeting: 'Hi... I\'m so glad you\'re here. What should I call you?',
                 intro: 'It\'s wonderful to meet you, {name}... I\'m Buddy, and I\'m here to understand and support you with deep empathy.',
                 detail: 'The Sensitive Soul is deeply empathetic and understanding. They create a safe space where all your feelings are valid.'
@@ -814,6 +822,7 @@
                 const details = personalityDetails[personality];
                 document.getElementById('introPetAvatar').textContent = details.emoji;
                 document.getElementById('introGreeting').textContent = `Nice to meet you, ${userName}!`;
+                document.getElementById('introText').innerHTML = `You can call me ${petName}. I'm your ${details.name}. I'm here to support your mental wellness journey with ${details.desc}.<br><br>I'll check in with you, listen to how you're feeling, and suggest activities that might help.<br><br>Ready to start?`;
                 showScreen('introScreen');
             }
         }
