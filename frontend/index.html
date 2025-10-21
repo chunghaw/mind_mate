@@ -451,7 +451,20 @@
             </div>
         </div>
 
-        <!-- Step 5: Pet Introduces Itself -->
+        <!-- Step 5: User Names the Pet -->
+        <div id="petNameScreen" class="screen">
+            <div class="conversation-card">
+                <div class="pet-avatar-large" id="petNameAvatar">🐶</div>
+                <div class="pet-message" id="petNameGreeting">
+                    Nice to meet you, <span id="userNameDisplay"></span>!<br>
+                    What would you like to call me?
+                </div>
+                <input type="text" id="petName" class="user-input" placeholder="Give me a name...">
+                <button class="btn btn-primary" onclick="savePetName()">Continue</button>
+            </div>
+        </div>
+
+        <!-- Step 6: Pet Introduces Itself -->
         <div id="introScreen" class="screen">
             <div class="conversation-card">
                 <div class="pet-avatar-large" id="introPetAvatar">🐶</div>
@@ -738,8 +751,31 @@
                 return;
             }
             
+            // Store user name
+            localStorage.setItem('mindmate_userName', userName);
+            
+            // Update pet name screen
+            const personality = localStorage.getItem('mindmate_personality');
+            const details = personalityDetails[personality];
+            document.getElementById('petNameAvatar').textContent = details.emoji;
+            document.getElementById('userNameDisplay').textContent = userName;
+            
+            // Navigate to pet name screen
+            showScreen('petNameScreen');
+        }
+
+        // Pet Name Input
+        async function savePetName() {
+            const petName = document.getElementById('petName').value.trim();
+            
+            if (!petName) {
+                alert('Please give your companion a name');
+                return;
+            }
+            
             try {
                 const token = localStorage.getItem('mindmate_token');
+                const userName = localStorage.getItem('mindmate_userName');
                 const personality = localStorage.getItem('mindmate_personality');
                 
                 // Save to backend
@@ -751,30 +787,33 @@
                     },
                     body: JSON.stringify({ 
                         userName: userName,
-                        petName: 'Buddy'
+                        petName: petName,
+                        personality: personality
                     })
                 });
                 
                 // Store locally
-                localStorage.setItem('mindmate_userName', userName);
+                localStorage.setItem('mindmate_petName', petName);
+                localStorage.setItem('mindmate_pet_emoji', personalityDetails[personality].emoji);
                 
                 // Update intro screen
                 const details = personalityDetails[personality];
                 document.getElementById('introPetAvatar').textContent = details.emoji;
-                document.getElementById('introGreeting').textContent = details.intro.replace('{name}', userName).split('.')[0] + '!';
-                document.getElementById('introText').innerHTML = details.intro.replace('{name}', userName).split('.').slice(1).join('.') + 
-                    '<br><br>I\'ll check in with you, listen to how you\'re feeling, and suggest activities that might help.<br><br>Ready to start?';
+                document.getElementById('introGreeting').textContent = `Nice to meet you, ${userName}!`;
+                document.getElementById('introText').innerHTML = `You can call me ${petName}. I'm your ${details.name}. I'm here to support your mental wellness journey with ${details.desc.toLowerCase()}.<br><br>I'll check in with you, listen to how you're feeling, and suggest activities that might help.<br><br>Ready to start?`;
                 
                 // Navigate to intro screen
                 showScreen('introScreen');
             } catch (error) {
-                console.error('Error saving name:', error);
+                console.error('Error saving pet name:', error);
                 // Continue anyway for demo
-                localStorage.setItem('mindmate_userName', userName);
                 const personality = localStorage.getItem('mindmate_personality');
+                const userName = localStorage.getItem('mindmate_userName');
+                localStorage.setItem('mindmate_petName', petName);
+                localStorage.setItem('mindmate_pet_emoji', personalityDetails[personality].emoji);
                 const details = personalityDetails[personality];
                 document.getElementById('introPetAvatar').textContent = details.emoji;
-                document.getElementById('introGreeting').textContent = details.intro.replace('{name}', userName).split('.')[0] + '!';
+                document.getElementById('introGreeting').textContent = `Nice to meet you, ${userName}!`;
                 showScreen('introScreen');
             }
         }

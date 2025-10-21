@@ -1087,7 +1087,7 @@
         <div class="tab-content" id="chatContent">
             <div class="chat-section">
                 <div class="section-header">
-                    <div class="companion-avatar" id="companionAvatar">🐶</div>
+                    <div class="companion-avatar" id="companionAvatar" onclick="changePet()" style="cursor: pointer;" title="Click to change pet">🐶</div>
                     <div class="companion-info">
                         <div class="companion-name" id="companionName">Your Gentle Guardian</div>
                         <div class="companion-status" id="companionStatus">AI-powered mental health companion</div>
@@ -1164,6 +1164,17 @@
             return id;
         })();
         
+        // Helper function to get personality display name
+        function getPersonalityName(personality) {
+            const names = {
+                'gentle': 'Gentle Guardian',
+                'playful': 'Playful Pal',
+                'focused': 'Focused Friend',
+                'sensitive': 'Sensitive Soul'
+            };
+            return names[personality] || 'Gentle Guardian';
+        }
+        
         // ===== GLOBAL STATE =====
         const AppState = {
             wellness: {
@@ -1179,9 +1190,10 @@
                 messages: [],
                 isTyping: false,
                 companion: {
-                    name: 'Your Gentle Guardian',
+                    name: localStorage.getItem('mindmate_petName') || 'Buddy',
                     emoji: localStorage.getItem('mindmate_pet_emoji') || '🐶',
-                    personality: localStorage.getItem('mindmate_personality') || 'gentle'
+                    personality: localStorage.getItem('mindmate_personality') || 'gentle',
+                    personalityName: getPersonalityName(localStorage.getItem('mindmate_personality') || 'gentle')
                 }
             },
             processing: {
@@ -1810,6 +1822,78 @@
             }
         }
 
+        function updateCompanionDisplay() {
+            const petName = localStorage.getItem('mindmate_petName') || 'Buddy';
+            const petEmoji = localStorage.getItem('mindmate_pet_emoji') || '🐶';
+            const personality = localStorage.getItem('mindmate_personality') || 'gentle';
+            const personalityName = getPersonalityName(personality);
+            
+            // Update chat header
+            document.getElementById('companionAvatar').textContent = petEmoji;
+            document.getElementById('companionName').textContent = petName;
+            document.getElementById('companionStatus').textContent = `Your ${personalityName}`;
+            
+            // Update AppState
+            AppState.chat.companion.name = petName;
+            AppState.chat.companion.emoji = petEmoji;
+            AppState.chat.companion.personality = personality;
+            AppState.chat.companion.personalityName = personalityName;
+        }
+
+        function changePet() {
+            const personalities = [
+                { emoji: '🐶', name: 'Gentle Guardian', personality: 'gentle', desc: 'Nurturing, supportive, patient' },
+                { emoji: '🐱', name: 'Playful Pal', personality: 'playful', desc: 'Energetic, fun, encouraging' },
+                { emoji: '🐉', name: 'Focused Friend', personality: 'focused', desc: 'Goal-oriented, motivating, structured' },
+                { emoji: '🦊', name: 'Sensitive Soul', personality: 'sensitive', desc: 'Empathetic, understanding, gentle' }
+            ];
+            
+            const currentPersonality = localStorage.getItem('mindmate_personality') || 'gentle';
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">🐾 Change Your Companion</h2>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    </div>
+                    <div style="padding: 20px 0;">
+                        ${personalities.map(p => `
+                            <div onclick="selectNewPet('${p.personality}', '${p.emoji}', '${p.name}')" 
+                                 style="padding: 16px; margin: 8px 0; background: ${p.personality === currentPersonality ? '#86efac' : '#f0f9f4'}; 
+                                        border: 2px solid ${p.personality === currentPersonality ? '#4ade80' : '#d1fae5'}; 
+                                        border-radius: 12px; cursor: pointer; transition: all 0.2s;"
+                                 onmouseover="this.style.background='#d1fae5'" 
+                                 onmouseout="this.style.background='${p.personality === currentPersonality ? '#86efac' : '#f0f9f4'}'">
+                                <div style="font-size: 32px; margin-bottom: 8px;">${p.emoji}</div>
+                                <div style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">${p.name}</div>
+                                <div style="font-size: 13px; color: #64748b;">${p.desc}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function selectNewPet(personality, emoji, name) {
+            const petName = localStorage.getItem('mindmate_petName') || 'Buddy';
+            
+            // Save new personality
+            localStorage.setItem('mindmate_personality', personality);
+            localStorage.setItem('mindmate_pet_emoji', emoji);
+            
+            // Update display
+            updateCompanionDisplay();
+            
+            // Close modal
+            document.querySelector('.modal-overlay')?.remove();
+            
+            // Show confirmation
+            chatInterface.addMessage('companion', `Hi! I'm still ${petName}, but now I'm your ${name}! 🎉`);
+        }
+
         function switchTab(tabName) {
             // Update tab buttons
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -2313,6 +2397,9 @@
             // Initialize classes
             wellnessHero = new WellnessHero();
             chatInterface = new ChatInterface();
+            
+            // Update companion display with saved data
+            updateCompanionDisplay();
             
             // Load REAL wellness data from ML API
             await loadWellnessData();
