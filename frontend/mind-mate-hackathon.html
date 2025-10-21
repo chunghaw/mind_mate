@@ -1745,6 +1745,9 @@
                         <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
                     </div>
                     <div style="padding: 20px 0;">
+                        <button onclick="signOut()" style="width: 100%; padding: 16px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px;">
+                            🚪 Sign Out
+                        </button>
                         <button onclick="resetChat()" style="width: 100%; padding: 16px; background: #f87171; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px;">
                             🗑️ Reset Chat History
                         </button>
@@ -1752,12 +1755,30 @@
                             ⚠️ Clear All Data & Logout
                         </button>
                         <p style="font-size: 13px; color: #64748b; margin-top: 16px; line-height: 1.6;">
-                            Reset chat will clear your conversation history but keep your account. Clear all data will log you out and remove all local data.
+                            <strong>Sign Out:</strong> Log out and return to login page.<br>
+                            <strong>Reset Chat:</strong> Clear conversation history only.<br>
+                            <strong>Clear All Data:</strong> Remove all local data and log out.
                         </p>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
+        }
+        
+        function signOut() {
+            if (confirm('Are you sure you want to sign out?')) {
+                // Clear authentication tokens
+                localStorage.removeItem('mindmate_token');
+                localStorage.removeItem('mindmate_onboardingComplete');
+                localStorage.removeItem('mindmate_userId');
+                localStorage.removeItem('mindmate_username');
+                localStorage.removeItem('mindmate_email');
+                
+                console.log('👋 User signed out');
+                
+                // Redirect to login page
+                window.location.href = '/';
+            }
         }
         
         function resetChat() {
@@ -1785,7 +1806,7 @@
                 localStorage.clear();
                 
                 // Redirect to login
-                window.location.href = '/onboarding.html';
+                window.location.href = '/';
             }
         }
 
