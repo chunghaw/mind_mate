@@ -331,6 +331,7 @@ mind_mate/
 ├── 📚 docs/                              # Documentation
 │   ├── API_REFERENCE.md                  # API documentation
 │   ├── DEPLOYMENT_CHECKLIST.md           # Deployment guide
+│   ├── TESTING_GUIDE.md                  # Comprehensive testing guide
 │   ├── ML_PREDICTION_SPEC.md             # ML specifications
 │   ├── DEMO_SCRIPT.md                    # Demo walkthrough
 │   ├── COST_BREAKDOWN.md                 # AWS cost analysis
@@ -339,7 +340,13 @@ mind_mate/
 │   └── BEDROCK_PROMPTS.md                # AI prompt engineering
 │
 ├── 🧪 test/                              # Testing
-│   └── sample-payloads.json              # API test payloads
+│   ├── sample-payloads.json              # API test payloads
+│   ├── run_all_tests.sh                  # Comprehensive test suite
+│   ├── test_user_journey.sh              # End-to-end user flow tests
+│   ├── test_ml_pipeline.sh               # ML pipeline integration tests
+│   ├── test_demo_scenarios.sh            # Demo scenario tests
+│   ├── cleanup_test_data.sh              # Test data cleanup
+│   └── README.md                         # Testing documentation
 │
 ├── 📋 scripts/                           # Utility Scripts
 │   └── generate-synthetic-data.py        # Test data generation
@@ -773,6 +780,90 @@ Risk Score + Level → Intervention Triggers → User Alerts
 - Human oversight of critical decisions
 - Audit trails for all actions
 - Regular ethics reviews
+
+---
+
+## 🧪 Testing
+
+### Automated Test Suite
+
+Mind Mate includes comprehensive automated testing for all components:
+
+```bash
+# Run complete test suite
+cd test
+export API_URL="https://YOUR_API_ID.execute-api.us-east-1.amazonaws.com"
+./run_all_tests.sh
+```
+
+### Test Coverage
+
+**Backend Testing**:
+- Lambda function invocations
+- DynamoDB data persistence
+- CloudWatch logging
+- Bedrock AI integration
+
+**ML Pipeline Testing**:
+- Feature extraction (mood, behavioral, sentiment)
+- Risk score calculation
+- Model predictions (if SageMaker deployed)
+
+**Integration Testing**:
+- End-to-end user journeys
+- API endpoint responses
+- Authentication flows
+
+**Demo Scenarios**:
+- Stable user (low risk)
+- Declining user (moderate risk)
+- Crisis user (critical risk)
+- Volatile user (unpredictable)
+
+### Available Test Scripts
+
+```bash
+# Comprehensive test suite
+./run_all_tests.sh
+
+# End-to-end user journey
+./test_user_journey.sh
+
+# ML pipeline integration
+./test_ml_pipeline.sh
+
+# Demo scenarios
+./test_demo_scenarios.sh
+
+# Cleanup test data
+./cleanup_test_data.sh
+```
+
+### Manual Testing
+
+**Test mood logging**:
+```bash
+curl -X POST "$API_URL/mood" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"test-user","mood":7,"notes":"Testing"}'
+```
+
+**Test chat**:
+```bash
+curl -X POST "$API_URL/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"test-user","message":"Hello!"}'
+```
+
+**Test risk calculation**:
+```bash
+aws lambda invoke \
+  --function-name calculateRiskScore \
+  --payload '{"userId":"test-user"}' \
+  response.json && cat response.json
+```
+
+For detailed testing instructions, see [TESTING_GUIDE.md](docs/TESTING_GUIDE.md).
 
 ---
 

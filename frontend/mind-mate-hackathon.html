@@ -1707,9 +1707,12 @@
                         const insight = riskData.riskScore < 0.3 ? 
                             "Your wellness indicators are stable. The ML model predicts low risk for the next 7 days based on your consistent patterns." :
                             "The ML model has identified some areas to monitor. Let's work together to keep you safe.";
-                        InsightCard.add(insight, Math.round(riskData.confidence || 85), 49
-                    );
-                }, 1000);
+                        InsightCard.add(insight, Math.round(riskData.confidence || 85), 49);
+                    }, 1000);
+                } catch (error) {
+                    console.error('❌ Failed to calculate risk:', error);
+                    chatInterface.addMessage('companion', 'I had trouble analyzing your wellness data. Please try again later.');
+                }
             }, 4000);
         }
 
