@@ -160,9 +160,22 @@
             box-shadow: 0 8px 20px rgba(134, 239, 172, 0.3);
         }
 
-        .personality-emoji {
-            font-size: 56px;
+        .personality-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
             margin-bottom: 12px;
+            border: 3px solid #d1fae5;
+            transition: all 0.3s;
+        }
+        
+        .personality-option:hover .personality-image {
+            border-color: #86efac;
+        }
+        
+        .personality-option.selected .personality-image {
+            border-color: #4ade80;
         }
 
         .personality-name {
@@ -204,8 +217,13 @@
         }
 
         .pet-avatar-large {
-            font-size: 100px;
-            margin-bottom: 24px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 24px;
+            display: block;
+            border: 4px solid #86efac;
             animation: bounce 2s ease-in-out infinite;
         }
 
@@ -408,25 +426,25 @@
                 
                 <div class="personality-grid">
                     <div class="personality-option" data-personality="gentle" onclick="selectPersonality('gentle')">
-                        <div class="personality-emoji">🐶</div>
+                        <img src="Gentle Guardian.jpeg" alt="Gentle Guardian" class="personality-image">
                         <div class="personality-name">Gentle Guardian</div>
                         <div class="personality-desc">Nurturing, supportive, patient</div>
                     </div>
                     
                     <div class="personality-option" data-personality="playful" onclick="selectPersonality('playful')">
-                        <div class="personality-emoji">🐱</div>
+                        <img src="Playful Pal.jpeg" alt="Playful Pal" class="personality-image">
                         <div class="personality-name">Playful Pal</div>
                         <div class="personality-desc">Energetic, fun, motivating</div>
                     </div>
                     
                     <div class="personality-option" data-personality="focused" onclick="selectPersonality('focused')">
-                        <div class="personality-emoji">🐉</div>
+                        <img src="Focused Friend.jpeg" alt="Focused Friend" class="personality-image">
                         <div class="personality-name">Focused Friend</div>
                         <div class="personality-desc">Calm, direct, mindful</div>
                     </div>
                     
                     <div class="personality-option" data-personality="sensitive" onclick="selectPersonality('sensitive')">
-                        <div class="personality-emoji">🦊</div>
+                        <img src="Sensitive Soul.png" alt="Sensitive Soul" class="personality-image">
                         <div class="personality-name">Sensitive Soul</div>
                         <div class="personality-desc">Empathetic, understanding, validating</div>
                     </div>

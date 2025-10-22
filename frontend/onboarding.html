@@ -160,9 +160,22 @@
             box-shadow: 0 8px 20px rgba(134, 239, 172, 0.3);
         }
 
-        .personality-emoji {
-            font-size: 56px;
+        .personality-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
             margin-bottom: 12px;
+            border: 3px solid #d1fae5;
+            transition: all 0.3s;
+        }
+        
+        .personality-option:hover .personality-image {
+            border-color: #86efac;
+        }
+        
+        .personality-option.selected .personality-image {
+            border-color: #4ade80;
         }
 
         .personality-name {
@@ -204,8 +217,13 @@
         }
 
         .pet-avatar-large {
-            font-size: 100px;
-            margin-bottom: 24px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 24px;
+            display: block;
+            border: 4px solid #86efac;
             animation: bounce 2s ease-in-out infinite;
         }
 
@@ -408,25 +426,25 @@
                 
                 <div class="personality-grid">
                     <div class="personality-option" data-personality="gentle" onclick="selectPersonality('gentle')">
-                        <div class="personality-emoji">🐶</div>
+                        <img src="Gentle Guardian.jpeg" alt="Gentle Guardian" class="personality-image">
                         <div class="personality-name">Gentle Guardian</div>
                         <div class="personality-desc">Nurturing, supportive, patient</div>
                     </div>
                     
                     <div class="personality-option" data-personality="playful" onclick="selectPersonality('playful')">
-                        <div class="personality-emoji">🐱</div>
+                        <img src="Playful Pal.jpeg" alt="Playful Pal" class="personality-image">
                         <div class="personality-name">Playful Pal</div>
                         <div class="personality-desc">Energetic, fun, motivating</div>
                     </div>
                     
                     <div class="personality-option" data-personality="focused" onclick="selectPersonality('focused')">
-                        <div class="personality-emoji">🐉</div>
+                        <img src="Focused Friend.jpeg" alt="Focused Friend" class="personality-image">
                         <div class="personality-name">Focused Friend</div>
                         <div class="personality-desc">Calm, direct, mindful</div>
                     </div>
                     
                     <div class="personality-option" data-personality="sensitive" onclick="selectPersonality('sensitive')">
-                        <div class="personality-emoji">🦊</div>
+                        <img src="Sensitive Soul.png" alt="Sensitive Soul" class="personality-image">
                         <div class="personality-name">Sensitive Soul</div>
                         <div class="personality-desc">Empathetic, understanding, validating</div>
                     </div>
@@ -441,7 +459,7 @@
         <!-- Step 4: Pet Asks for User's Name -->
         <div id="nameScreen" class="screen">
             <div class="conversation-card">
-                <div class="pet-avatar-large" id="petAvatar">🐶</div>
+                <img src="Gentle Guardian.jpeg" alt="Pet Avatar" class="pet-avatar-large" id="petAvatar">
                 <div class="pet-message" id="nameGreeting">
                     Hi there! I'm so excited to be your companion!<br>
                     What should I call you?
@@ -454,7 +472,7 @@
         <!-- Step 5: Pet Introduces Itself -->
         <div id="introScreen" class="screen">
             <div class="conversation-card">
-                <div class="pet-avatar-large" id="introPetAvatar">🐶</div>
+                <img src="Gentle Guardian.jpeg" alt="Pet Avatar" class="pet-avatar-large" id="introPetAvatar">
                 <div class="pet-message" id="introGreeting">Nice to meet you!</div>
                 <p class="intro-text" id="introText">
                     You can call me Buddy. I'm here to support your mental wellness journey.<br><br>
@@ -484,25 +502,25 @@
         // Personality Details
         const personalityDetails = {
             gentle: {
-                emoji: '🐶',
+                image: 'Gentle Guardian.jpeg',
                 greeting: 'Hi there! I\'m so excited to be your companion! What should I call you?',
                 intro: 'Nice to meet you, {name}! You can call me Buddy. I\'m here to support your mental wellness journey with patience and care.',
                 detail: 'The Gentle Guardian is nurturing and supportive. They speak with warmth and patience, always making you feel heard and validated.'
             },
             playful: {
-                emoji: '🐱',
+                image: 'Playful Pal.jpeg',
                 greeting: 'Hey there! 😊 I\'m SO excited to meet you! What\'s your name?',
                 intro: 'Yay! Hi {name}! 🎉 I\'m Buddy, and I\'m here to make your wellness journey fun and uplifting!',
                 detail: 'The Playful Pal is energetic and fun! They bring positivity and motivation, helping you see the bright side of things.'
             },
             focused: {
-                emoji: '🐉',
+                image: 'Focused Friend.jpeg',
                 greeting: 'Greetings. I\'m here to support you. What should I call you?',
                 intro: 'Perfect. Nice to meet you, {name}. I\'m Buddy. Let\'s work together on your mental wellness with clarity and purpose.',
                 detail: 'The Focused Friend is calm and direct. They help you stay mindful and goal-oriented, cutting through the noise.'
             },
             sensitive: {
-                emoji: '🦊',
+                image: 'Sensitive Soul.png',
                 greeting: 'Hi... I\'m so glad you\'re here. What should I call you?',
                 intro: 'It\'s wonderful to meet you, {name}... I\'m Buddy, and I\'m here to understand and support you with deep empathy.',
                 detail: 'The Sensitive Soul is deeply empathetic and understanding. They create a safe space where all your feelings are valid.'
@@ -713,7 +731,7 @@
                 
                 // Update name screen with personality
                 const details = personalityDetails[selectedPersonality];
-                document.getElementById('petAvatar').textContent = details.emoji;
+                document.getElementById('petAvatar').src = details.image;
                 document.getElementById('nameGreeting').innerHTML = details.greeting;
                 
                 // Navigate to name screen
@@ -723,7 +741,7 @@
                 // Continue anyway for demo
                 localStorage.setItem('mindmate_personality', selectedPersonality);
                 const details = personalityDetails[selectedPersonality];
-                document.getElementById('petAvatar').textContent = details.emoji;
+                document.getElementById('petAvatar').src = details.image;
                 document.getElementById('nameGreeting').innerHTML = details.greeting;
                 showScreen('nameScreen');
             }
@@ -760,7 +778,7 @@
                 
                 // Update intro screen
                 const details = personalityDetails[personality];
-                document.getElementById('introPetAvatar').textContent = details.emoji;
+                document.getElementById('introPetAvatar').src = details.image;
                 document.getElementById('introGreeting').textContent = details.intro.replace('{name}', userName).split('.')[0] + '!';
                 document.getElementById('introText').innerHTML = details.intro.replace('{name}', userName).split('.').slice(1).join('.') + 
                     '<br><br>I\'ll check in with you, listen to how you\'re feeling, and suggest activities that might help.<br><br>Ready to start?';
@@ -773,7 +791,7 @@
                 localStorage.setItem('mindmate_userName', userName);
                 const personality = localStorage.getItem('mindmate_personality');
                 const details = personalityDetails[personality];
-                document.getElementById('introPetAvatar').textContent = details.emoji;
+                document.getElementById('introPetAvatar').src = details.image;
                 document.getElementById('introGreeting').textContent = details.intro.replace('{name}', userName).split('.')[0] + '!';
                 showScreen('introScreen');
             }
