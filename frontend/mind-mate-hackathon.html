@@ -606,7 +606,7 @@
             cursor: not-allowed;
         }
 
-        .camera-btn, .voice-btn {
+        .camera-btn, .voice-btn, .image-btn {
             width: 40px;
             height: 40px;
             background: var(--primary);
@@ -622,7 +622,7 @@
             flex-shrink: 0;
         }
 
-        .camera-btn:hover, .voice-btn:hover {
+        .camera-btn:hover, .voice-btn:hover, .image-btn:hover {
             background: var(--primary-dark);
             transform: scale(1.05);
         }
@@ -1279,7 +1279,11 @@
                     <button class="voice-btn" onclick="toggleVoiceMode()" id="voiceBtn" aria-label="Voice mode" title="Hold to speak">
                         🎤
                     </button>
-                    <input type="text" class="input-field" id="messageInput" placeholder="Share your thoughts or hold mic to speak..."
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                    <button class="image-btn" onclick="document.getElementById('imageInput').click()" aria-label="Upload image">
+                        📷
+                    </button>
+                    <input type="text" class="input-field" id="messageInput" placeholder="Share your thoughts or attach an image..."
                         onkeypress="handleKeyPress(event)" aria-label="Message input">
                     <button class="send-btn" onclick="sendMessage()" id="sendBtn" aria-label="Send message">
                         ➤
@@ -1862,30 +1866,93 @@
         let chatInterface;
 
         // ===== MAIN FUNCTIONS =====
+        
+        // Global variable to store selected image
+        let selectedImage = null;
+        
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image too large. Please select an image under 5MB');
+                return;
+            }
+            
+            try {
+                // Convert to base64
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImage = {
+                        data: e.target.result.split(',')[1], // Remove data:image/jpeg;base64, prefix
+                        type: file.type,
+                        name: file.name
+                    };
+                    
+                    // Show preview in message input
+                    const input = document.getElementById('messageInput');
+                    input.placeholder = `📷 Image selected: ${file.name} - Add a message or send as is`;
+                    input.style.background = '#e8f5e8';
+                    
+                    // Auto-send the image
+                    sendMessage();
+                };
+                reader.readAsDataURL(file);
+                
+            } catch (error) {
+                console.error('Error processing image:', error);
+                alert('Error processing image. Please try again.');
+            }
+        }
+        
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
 
-            if (!message || AppState.chat.isTyping) return;
+            // Check if we have an image or message
+            if (!message && !selectedImage) return;
+            if (AppState.chat.isTyping) return;
 
             // Clear input immediately
             input.value = '';
+            input.placeholder = 'Share your thoughts or attach an image...';
+            input.style.background = '';
 
             // Show typing indicator
             AppState.chat.isTyping = true;
             chatInterface.showTyping();
 
+            // Prepare message for display
+            let displayMessage = message;
+            if (selectedImage) {
+                displayMessage = selectedImage.name ? `📷 ${selectedImage.name}` : '📷 Image';
+                if (message) {
+                    displayMessage += ` - ${message}`;
+                }
+            }
+
             // Get AI response (send message BEFORE adding to UI)
             try {
-                const aiResponse = await sendChatMessage(message);
+                const aiResponse = await sendChatMessage(message, selectedImage);
                 chatInterface.hideTyping();
 
                 // Now add both messages to UI
-                chatInterface.addMessage('user', message);
+                chatInterface.addMessage('user', displayMessage);
                 if (aiResponse) {
                     chatInterface.addMessage('companion', aiResponse);
                 }
                 AppState.chat.isTyping = false;
+
+                // Clear selected image
+                selectedImage = null;
+                document.getElementById('imageInput').value = '';
 
                 // Check for crisis keywords and refresh dashboard if detected
                 const crisisKeywords = ['suicide', 'kill myself', 'end it', 'die', 'hopeless', 'worthless'];
@@ -2513,21 +2580,32 @@
         });
 
         // ===== CONVERSATIONAL AI CHAT =====
-        async function sendChatMessage(userMessage) {
+        async function sendChatMessage(userMessage, imageData = null) {
             try {
-                // Use regular chat endpoint (fallback from agent-chat due to Bedrock permissions)
+                // Use regular chat endpoint
                 const CHAT_API = 'https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com/chat';
 
-                console.log('📤 Sending message to chat API');
+                console.log('📤 Sending message to chat API', imageData ? 'with image' : 'text only');
 
-                // Call regular chat Lambda
+                // Prepare request body
+                const requestBody = {
+                    userId: USER_ID,
+                    message: userMessage || (imageData ? 'I\'m sharing an image with you.' : '')
+                };
+
+                // Add image data if present
+                if (imageData) {
+                    requestBody.image = {
+                        data: imageData.data,
+                        type: imageData.type
+                    };
+                }
+
+                // Call chat Lambda
                 const response = await fetch(CHAT_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: USER_ID,
-                        message: userMessage
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 if (!response.ok) {

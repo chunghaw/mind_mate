@@ -18,19 +18,17 @@ def lambda_handler(event, context):
         
         user_id = body.get('userId', 'demo-user')
         message = body.get('message', '')
+        image_data = body.get('image')
         history = body.get('history', [])
         user_context = body.get('context', {})
         
-        if not message:
+        if not message and not image_data:
             return {
                 'statusCode': 400,
                 'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': 'https://main.d3pktquxaop3su.amplifyapp.com',
-                    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+                    'Content-Type': 'application/json'
                 },
-                'body': json.dumps({'error': 'message is required'})
+                'body': json.dumps({'error': 'message or image is required'})
             }
         
         # Build system prompt with wellness context
@@ -48,6 +46,12 @@ CRITICAL RULES:
 - Be empathetic, warm, and non-judgmental
 - Offer practical suggestions when asked "what should I do?"
 - Never provide medical advice or diagnosis
+
+IMAGE ANALYSIS:
+- If the user shares an image, analyze their facial expression, body language, and environment
+- Comment on what you observe in a caring, supportive way
+- Ask follow-up questions about how they're feeling
+- Provide emotional support based on what you see
 
 Current user context:
 - Wellness Score: {wellness_score}/10
@@ -67,11 +71,33 @@ REMEMBER: No asterisks or stage directions - just speak directly to the user."""
                 'content': msg.get('content', '')
             })
         
-        # Add current message
-        messages.append({
-            'role': 'user',
-            'content': message
-        })
+        # Add current message (with image support)
+        if image_data:
+            # Handle image message
+            content = []
+            if message:
+                content.append({
+                    "type": "text",
+                    "text": message
+                })
+            content.append({
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": image_data.get('type', 'image/jpeg'),
+                    "data": image_data['data']
+                }
+            })
+            messages.append({
+                'role': 'user',
+                'content': content
+            })
+        else:
+            # Text-only message
+            messages.append({
+                'role': 'user',
+                'content': message
+            })
         
         # Ensure first message is from user (Claude requirement)
         if messages and messages[0].get('role') != 'user':
