@@ -478,6 +478,15 @@
             animation: slideIn 0.3s ease-out;
         }
 
+        .ml-header:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        .ml-toggle-arrow {
+            user-select: none;
+        }
+
         .ml-analysis {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
             border: 1px solid #0ea5e9;
@@ -1392,10 +1401,6 @@
                         aria-label="Attach file">
                         📎
                     </button>
-                    <button class="image-btn" onclick="toggleAIAnalysis()" id="aiAnalysisToggle" 
-                        aria-label="Toggle AI Analysis" title="Toggle AI Analysis">
-                        🧠
-                    </button>
                     <input type="text" class="input-field" id="messageInput"
                         placeholder="Share your thoughts or attach an image..." onkeypress="handleKeyPress(event)"
                         aria-label="Message input">
@@ -1792,11 +1797,6 @@
             }
 
             async addMLInterpretation(userText) {
-                // Check if AI Analysis is enabled
-                if (!AppState.settings.showAIAnalysis) {
-                    return;
-                }
-
                 // Enhanced ML analysis using multiple AI services
                 try {
                     console.log('🧠 Running comprehensive ML analysis...');
@@ -1841,11 +1841,16 @@
                             mlDiv.className = 'ml-interpretation';
                             mlDiv.innerHTML = `
                                 <div class="ml-analysis">
-                                    <div class="ml-header">🧠 AI/ML Analysis</div>
-                                    <div class="ml-insights">
-                                        ${insights.slice(0, 3).map(insight => `<div class="ml-insight">${insight}</div>`).join('')}
+                                    <div class="ml-header" onclick="toggleMLAnalysis(this)" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                                        <span>🧠 AI/ML Analysis</span>
+                                        <span class="ml-toggle-arrow" style="font-size: 12px; transition: transform 0.2s;">▼</span>
                                     </div>
-                                    <div class="ml-score">Risk Score: ${riskScore}% | Confidence: ${confidence}%</div>
+                                    <div class="ml-content" style="display: block;">
+                                        <div class="ml-insights">
+                                            ${insights.slice(0, 3).map(insight => `<div class="ml-insight">${insight}</div>`).join('')}
+                                        </div>
+                                        <div class="ml-score">Risk Score: ${riskScore}% | Confidence: ${confidence}%</div>
+                                    </div>
                                 </div>
                             `;
                             this.container.appendChild(mlDiv);
@@ -3258,38 +3263,21 @@
             }
         }
 
-        // ===== AI ANALYSIS TOGGLE =====
-        function toggleAIAnalysis() {
-            AppState.settings.showAIAnalysis = !AppState.settings.showAIAnalysis;
-            localStorage.setItem('mindmate_showAIAnalysis', AppState.settings.showAIAnalysis.toString());
+        // ===== ML ANALYSIS COLLAPSE/EXPAND =====
+        function toggleMLAnalysis(headerElement) {
+            const mlContent = headerElement.nextElementSibling;
+            const arrow = headerElement.querySelector('.ml-toggle-arrow');
             
-            const toggleBtn = document.getElementById('aiAnalysisToggle');
-            if (AppState.settings.showAIAnalysis) {
-                toggleBtn.style.background = '#10b981';
-                toggleBtn.style.color = 'white';
-                toggleBtn.title = 'AI Analysis: ON (Click to disable)';
-                console.log('✅ AI Analysis enabled');
+            if (mlContent.style.display === 'none') {
+                // Expand
+                mlContent.style.display = 'block';
+                arrow.style.transform = 'rotate(0deg)';
+                arrow.textContent = '▼';
             } else {
-                toggleBtn.style.background = '#6b7280';
-                toggleBtn.style.color = 'white';
-                toggleBtn.title = 'AI Analysis: OFF (Click to enable)';
-                console.log('❌ AI Analysis disabled');
-            }
-        }
-
-        // Initialize AI Analysis toggle button
-        function initializeAIAnalysisToggle() {
-            const toggleBtn = document.getElementById('aiAnalysisToggle');
-            if (toggleBtn) {
-                if (AppState.settings.showAIAnalysis) {
-                    toggleBtn.style.background = '#10b981';
-                    toggleBtn.style.color = 'white';
-                    toggleBtn.title = 'AI Analysis: ON (Click to disable)';
-                } else {
-                    toggleBtn.style.background = '#6b7280';
-                    toggleBtn.style.color = 'white';
-                    toggleBtn.title = 'AI Analysis: OFF (Click to enable)';
-                }
+                // Collapse
+                mlContent.style.display = 'none';
+                arrow.style.transform = 'rotate(-90deg)';
+                arrow.textContent = '▶';
             }
         }
 
@@ -4476,9 +4464,6 @@
 
             // Load chat history
             await loadChatHistory();
-
-            // Initialize AI Analysis toggle button
-            initializeAIAnalysisToggle();
 
             console.log('✅ All systems ready!');
         };
