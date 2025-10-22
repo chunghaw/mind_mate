@@ -10,6 +10,19 @@ def lambda_handler(event, context):
     Use Bedrock to analyze emotions and mental health indicators in user messages
     """
     try:
+        # Handle CORS preflight request
+        if event.get('httpMethod') == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST'
+                },
+                'body': json.dumps({})
+            }
+        
         # Parse request
         body = json.loads(event.get('body', '{}')) if isinstance(event.get('body'), str) else event
         
