@@ -1626,7 +1626,6 @@
             },
             settings: {
                 showAIAnalysis: localStorage.getItem('mindmate_showAIAnalysis') !== 'false' // Default to true
-                }
             },
             processing: {
                 isProcessing: false,
@@ -2628,7 +2627,7 @@
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${localStorage.getItem('mindmate_token')}`
                         },
-                        body: JSON.dumps({
+                        body: JSON.stringify({
                             userId: userId,
                             days: 30
                         })
@@ -2645,41 +2644,22 @@
                     console.error('❌ Mood feature extraction failed:', error);
                 }
 
-                // Enhanced fallback based on user type
-                if (userId === 'demo_ml_user') {
-                    return {
-                        mood_trend_7day: -0.6,
-                        mood_trend_14day: -0.4,
-                        mood_trend_30day: -0.2,
-                        mood_mean_7day: 3.2,
-                        mood_mean_14day: 4.1,
-                        mood_mean_30day: 4.8,
-                        mood_std_7day: 1.4,
-                        mood_volatility: 0.78,
-                        consecutive_low_days: 3,
-                        consecutive_high_days: 0,
-                        low_mood_frequency: 0.71,
-                        high_mood_frequency: 0.14,
-                        total_mood_entries: 14
-                    };
-                } else {
-                    // New user baseline
-                    return {
-                        mood_trend_7day: 0.0,
-                        mood_trend_14day: 0.0,
-                        mood_trend_30day: 0.0,
-                        mood_mean_7day: 7.0,
-                        mood_mean_14day: 7.0,
-                        mood_mean_30day: 7.0,
-                        mood_std_7day: 0.5,
-                        mood_volatility: 0.1,
-                        consecutive_low_days: 0,
-                        consecutive_high_days: 0,
-                        low_mood_frequency: 0.0,
-                        high_mood_frequency: 0.0,
-                        total_mood_entries: 0
-                    };
-                }
+                // Return empty baseline for new users - no fake data
+                return {
+                    mood_trend_7day: 0.0,
+                    mood_trend_14day: 0.0,
+                    mood_trend_30day: 0.0,
+                    mood_mean_7day: 5.0,
+                    mood_mean_14day: 5.0,
+                    mood_mean_30day: 5.0,
+                    mood_std_7day: 0.0,
+                    mood_volatility: 0.0,
+                    consecutive_low_days: 0,
+                    consecutive_high_days: 0,
+                    low_mood_frequency: 0.0,
+                    high_mood_frequency: 0.0,
+                    total_mood_entries: 0
+                };
             }
 
             static async extractSentimentFeatures(userId) {
