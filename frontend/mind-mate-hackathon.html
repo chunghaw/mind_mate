@@ -1989,6 +1989,131 @@
             }
         }
 
+        async function showChatHistory() {
+            try {
+                // Clear current chat first
+                const chatContainer = document.getElementById('chatMessages');
+                chatContainer.innerHTML = '';
+                AppState.chat.messages = [];
+                
+                console.log('📜 Loading demo chat history...');
+                
+                // Demo chat history showing mood decline and ML analysis
+                const demoHistory = [
+                    {
+                        sender: 'companion',
+                        text: 'Hi Alex! How are you feeling today?',
+                        timestamp: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        sender: 'user', 
+                        text: 'Hi Buddy! Had a good day at work today. Feeling pretty optimistic.',
+                        timestamp: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000 + 300000).toISOString()
+                    },
+                    {
+                        sender: 'companion',
+                        text: 'That\'s wonderful to hear! I\'m glad you\'re feeling optimistic. What made your day at work particularly good?',
+                        timestamp: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000 + 600000).toISOString()
+                    },
+                    {
+                        sender: 'user',
+                        text: 'Thanks for checking in. I\'m doing alright, just the usual stress.',
+                        timestamp: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        sender: 'user',
+                        text: 'Not sleeping well lately. Mind keeps racing at night.',
+                        timestamp: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        sender: 'companion',
+                        text: 'I\'m sorry to hear you\'re having trouble sleeping. Racing thoughts can be really challenging. Have you tried any relaxation techniques before bed?',
+                        timestamp: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000 + 300000).toISOString()
+                    },
+                    {
+                        sender: 'user',
+                        text: 'Everything feels overwhelming. Can\'t seem to catch a break.',
+                        timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        sender: 'companion',
+                        text: '🚨 I\'m noticing some concerning patterns in your messages. Your sentiment analysis shows increasing negative emotions. Would you like to talk about what\'s making you feel overwhelmed?',
+                        timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 300000).toISOString()
+                    },
+                    {
+                        sender: 'user',
+                        text: 'I don\'t know if I can handle this anymore. Feeling hopeless.',
+                        timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        sender: 'companion',
+                        text: '⚠️ ML ALERT: High-risk language detected. Sentiment score: -0.8. I\'m really concerned about you, Alex. These feelings are serious, and you don\'t have to face them alone. Have you considered reaching out to a mental health professional?',
+                        timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000 + 300000).toISOString()
+                    },
+                    {
+                        sender: 'user',
+                        text: 'What\'s the point? Nothing I do seems to matter.',
+                        timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        sender: 'companion',
+                        text: '🔴 CRISIS INTERVENTION: Hopelessness score: 0.82. Suicidal ideation risk: 0.7. Alex, I\'m very worried about you. Please reach out to: Crisis Text Line (741741) or National Suicide Prevention Lifeline (988). You matter, and help is available.',
+                        timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 300000).toISOString()
+                    },
+                    {
+                        sender: 'user',
+                        text: 'Maybe everyone would be better off without me.',
+                        timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        sender: 'companion',
+                        text: '🚨 IMMEDIATE INTERVENTION TRIGGERED: Crisis language detected. Risk Score: 73% (HIGH). I\'ve scheduled daily wellness checks and provided crisis resources. Alex, please know that you are valued and loved. This pain is temporary, but you are not alone.',
+                        timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000 + 300000).toISOString()
+                    },
+                    {
+                        sender: 'user',
+                        text: 'I\'m scared of these thoughts I\'m having.',
+                        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+                    },
+                    {
+                        sender: 'companion',
+                        text: 'Thank you for sharing that with me, Alex. It takes courage to acknowledge when we\'re scared. These thoughts are a signal that you need support, and I\'m here to help you find it. Let\'s work together on some coping strategies.',
+                        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 300000).toISOString()
+                    }
+                ];
+                
+                // Add system message
+                chatInterface.addMessage('companion', '📜 Loading your conversation history... This shows how my ML system detected your mood decline and triggered interventions.');
+                
+                // Add messages with delay for demo effect
+                for (let i = 0; i < demoHistory.length; i++) {
+                    setTimeout(() => {
+                        const msg = demoHistory[i];
+                        chatInterface.addMessage(msg.sender, msg.text);
+                        
+                        // Scroll to bottom after each message
+                        setTimeout(() => {
+                            const chatContainer = document.getElementById('chatMessages');
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        }, 100);
+                        
+                        // Add final summary message
+                        if (i === demoHistory.length - 1) {
+                            setTimeout(() => {
+                                chatInterface.addMessage('companion', '📊 This conversation history demonstrates: 1) Sentiment analysis tracking mood decline 2) Crisis language detection 3) Automated risk scoring 4) Proactive intervention triggers 5) Real-time ML monitoring for mental health support.');
+                            }, 1000);
+                        }
+                    }, i * 800); // 800ms delay between messages
+                }
+                
+                console.log('✅ Demo chat history loaded');
+                
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                chatInterface.addMessage('companion', 'Sorry, I had trouble loading the chat history. Please try again.');
+            }
+        }
+
         // ===== GLOBAL INSTANCES =====
         let wellnessHero;
         let chatInterface;
