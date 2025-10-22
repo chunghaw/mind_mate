@@ -1417,6 +1417,7 @@
                 companion: {
                     name: localStorage.getItem('mindmate_petName') || 'Buddy',
                     emoji: localStorage.getItem('mindmate_pet_emoji') || '🐶',
+                    image: localStorage.getItem('mindmate_pet_image') || 'Gentle Guardian.jpeg',
                     personality: localStorage.getItem('mindmate_personality') || 'gentle',
                     personalityName: getPersonalityName(localStorage.getItem('mindmate_personality') || 'gentle')
                 }
@@ -1590,7 +1591,10 @@
 
                 if (message.type === 'companion') {
                     messageDiv.innerHTML = `
-                        <div class="message-avatar">${AppState.chat.companion.emoji}</div>
+                        <div class="message-avatar">
+                            <img src="${AppState.chat.companion.image}" alt="${AppState.chat.companion.name}" 
+                                 style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        </div>
                         <div class="message-content">
                             <div class="message-bubble">${this.formatText(message.text)}</div>
                             <div class="message-time">${time}</div>
@@ -1620,7 +1624,10 @@
                 typingDiv.id = 'typingIndicator';
                 typingDiv.className = 'message companion';
                 typingDiv.innerHTML = `
-                    <div class="message-avatar">${AppState.chat.companion.emoji}</div>
+                    <div class="message-avatar">
+                        <img src="${AppState.chat.companion.image}" alt="${AppState.chat.companion.name}" 
+                             style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                    </div>
                     <div class="message-content">
                         <div class="message-bubble">
                             <div class="typing-indicator">
@@ -2600,10 +2607,10 @@
             const completed = localStorage.getItem('mindmate_onboarding_complete');
             if (completed === 'true') {
                 document.getElementById('onboardingOverlay').classList.add('hidden');
-                // Load saved pet
+                // Load saved pet data
                 const petEmoji = localStorage.getItem('mindmate_pet_emoji') || '🐶';
                 AppState.chat.companion.emoji = petEmoji;
-                document.getElementById('companionAvatar').textContent = petEmoji;
+                // Note: Avatar image will be set by updateCompanionDisplay() which is called after this
             }
         }
 
@@ -3091,10 +3098,11 @@
         }
 
         // Enhance the chat interface to support voice output
-        const originalAddMessage = chatInterface.addMessage;
-        chatInterface.addMessage = function(sender, message, options = {}) {
-            // Call original function
-            originalAddMessage.call(this, sender, message, options);
+        if (chatInterface && chatInterface.addMessage) {
+            const originalAddMessage = chatInterface.addMessage;
+            chatInterface.addMessage = function(sender, message, options = {}) {
+                // Call original function
+                originalAddMessage.call(this, sender, message, options);
             
             // If it's a companion message and voice is enabled, speak it
             if (sender === 'companion' && !message.includes('📊') && !message.includes('*')) {
@@ -3105,6 +3113,7 @@
                 }
             }
         };
+        }
 
         // Initialize speech recognition on page load
         document.addEventListener('DOMContentLoaded', function() {
