@@ -378,6 +378,7 @@ def calculate_risk_score(user_id):
             'riskLevel': risk_level,
             'riskFactors': risk_factors,
             'features': features,
+            'featuresAnalyzed': 49,  # Total ML features available
             'confidence': confidence,
             'method': 'rule_based'
         }

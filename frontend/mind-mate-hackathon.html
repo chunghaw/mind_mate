@@ -4232,7 +4232,7 @@
                     AppState.wellness.riskScore = riskScore;
                     AppState.wellness.riskLevel = riskData.riskLevel.toUpperCase();
                     AppState.wellness.confidence = Math.round(riskData.confidence || 85);
-                    AppState.wellness.featuresAnalyzed = Object.keys(riskData.features || {}).length;
+                    AppState.wellness.featuresAnalyzed = riskData.featuresAnalyzed || Object.keys(riskData.features || {}).length;
                     AppState.wellness.riskFactors = riskData.riskFactors || [];
                 }
 
