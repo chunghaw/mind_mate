@@ -387,6 +387,29 @@
             transform: scale(0.95);
         }
 
+        .show-history-btn {
+            background: var(--primary-light);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--primary-dark);
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+
+        .show-history-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .show-history-btn:active {
+            transform: scale(0.95);
+        }
+
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -1262,6 +1285,9 @@
                         <div class="companion-name" id="companionName">Your Gentle Guardian</div>
                         <div class="companion-status" id="companionStatus">AI-powered mental health companion</div>
                     </div>
+                    <button class="show-history-btn" onclick="showChatHistory()" title="Load demo chat history">
+                        📜 Show History
+                    </button>
                     <button class="clear-chat-btn" onclick="clearChat()" title="Clear chat history">
                         🗑️
                     </button>
