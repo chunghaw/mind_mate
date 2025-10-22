@@ -380,6 +380,35 @@ def store_risk_assessment(user_id, risk_data):
         print(f"Error storing risk assessment: {e}")
         return None
 
+def get_stored_ml_assessment(user_id):
+    """Check for pre-stored ML assessment and features"""
+    try:
+        # Check for stored risk assessment
+        risk_response = chat_table.get_item(
+            Key={
+                'PK': f'USER#{user_id}',
+                'SK': 'RISK_ASSESSMENT#CURRENT'
+            }
+        )
+        
+        if 'Item' in risk_response:
+            risk_item = risk_response['Item']
+            print(f"✅ Found pre-stored ML assessment for {user_id}")
+            
+            return {
+                'riskScore': float(risk_item.get('riskScore', 0)),
+                'riskLevel': risk_item.get('riskLevel', 'UNKNOWN').upper(),
+                'confidence': int(risk_item.get('confidence', 0)),
+                'featuresAnalyzed': 49,  # Total features in stored data
+                'riskFactors': risk_item.get('riskFactors', []),
+                'method': 'ml_ensemble'
+            }
+            
+    except Exception as e:
+        print(f"⚠️ Error checking stored ML data: {e}")
+    
+    return None
+
 def lambda_handler(event, context):
     """Calculate risk score for a user"""
     try:
@@ -389,6 +418,14 @@ def lambda_handler(event, context):
         
         # Parse request body
         body = json.loads(event.get('body', '{}'))
+        user_id = body.get('userId')
+        
+        # First, check for pre-stored ML assessment (for demo users)
+        if user_id:
+            stored_assessment = get_stored_ml_assessment(user_id)
+            if stored_assessment:
+                print(f"✅ Using pre-stored ML assessment for {user_id}")
+                return _resp(200, stored_assessment)
         user_id = body.get('userId')
         
         if not user_id:

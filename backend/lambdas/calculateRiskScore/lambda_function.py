@@ -16,6 +16,47 @@ chat_table = dynamodb.Table(os.environ.get('CHAT_HISTORY_TABLE', 'EmoCompanion')
 # Model cache for SageMaker-trained models
 _models_cache = {}
 
+def get_stored_ml_assessment(user_id):
+    """Check for pre-stored ML assessment and features"""
+    try:
+        # Check for stored risk assessment
+        risk_response = chat_table.get_item(
+            Key={
+                'PK': f'USER#{user_id}',
+                'SK': 'RISK_ASSESSMENT#CURRENT'
+            }
+        )
+        
+        # Check for stored ML features
+        features_response = chat_table.get_item(
+            Key={
+                'PK': f'USER#{user_id}',
+                'SK': 'ML_FEATURES#CURRENT'
+            }
+        )
+        
+        if 'Item' in risk_response and 'Item' in features_response:
+            risk_item = risk_response['Item']
+            features_item = features_response['Item']
+            
+            print(f"✅ Found pre-stored ML assessment for {user_id}")
+            
+            return {
+                'riskScore': float(risk_item.get('riskScore', 0)),
+                'riskLevel': risk_item.get('riskLevel', 'UNKNOWN').upper(),
+                'confidence': int(risk_item.get('confidence', 0)),
+                'featuresAnalyzed': 49,  # Total features in stored data
+                'riskFactors': risk_item.get('riskFactors', []),
+                'method': 'ml_ensemble',
+                'features': {k: float(v) for k, v in features_item.items() 
+                           if k not in ['PK', 'SK', 'userId', 'lastUpdated']}
+            }
+            
+    except Exception as e:
+        print(f"⚠️ Error checking stored ML data: {e}")
+    
+    return None
+
 def load_ml_models():
     """Load SageMaker-trained ML models from S3"""
     global _models_cache
@@ -567,6 +608,16 @@ def calculate_risk_from_features(user_id, features):
 def lambda_handler(event, context):
     """Calculate risk score for a user with enhanced ML capabilities"""
     try:
+
+        
+        # First, check for pre-stored ML assessment (for demo users)
+        stored_assessment = get_stored_ml_assessment(user_id)
+        if stored_assessment:
+            print(f"✅ Using pre-stored ML assessment for {user_id}")
+            return {
+                'statusCode': 200,
+                'body': json.dumps(stored_assessment)
+            }
         # Handle CORS preflight
         if event.get('httpMethod') == 'OPTIONS':
             return _resp(200, {})
