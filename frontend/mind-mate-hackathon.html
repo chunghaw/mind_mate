@@ -1804,35 +1804,29 @@
                     const analysis = await this.analyzeEmotionsWithBedrock(userText);
 
                     if (analysis && analysis.insights && analysis.insights.length > 0) {
-                        // Add ML analysis AFTER the user message (not after companion response)
+                        // Add ML analysis immediately after user message
                         setTimeout(() => {
-                            // Find the last user message to add analysis after it
-                            const userMessages = this.container.querySelectorAll('.message.user');
-                            const lastUserMessage = userMessages[userMessages.length - 1];
-
-                            if (lastUserMessage) {
-                                const mlDiv = document.createElement('div');
-                                mlDiv.className = 'ml-interpretation';
-                                mlDiv.innerHTML = `
-                                    <div class="ml-analysis">
-                                        <div class="ml-header" onclick="toggleMLAnalysis(this)" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
-                                            <span>🧠 AI Analysis</span>
-                                            <span class="ml-toggle-arrow" style="font-size: 12px; transition: transform 0.2s;">▼</span>
-                                        </div>
-                                        <div class="ml-content" style="display: block;">
-                                            <div class="ml-insights">
-                                                ${analysis.insights.map(insight => `<div class="ml-insight">${insight}</div>`).join('')}
-                                            </div>
-                                            <div class="ml-score">Risk Score: ${analysis.riskScore}% | Confidence: ${analysis.confidence}%</div>
-                                        </div>
+                            const mlDiv = document.createElement('div');
+                            mlDiv.className = 'ml-interpretation';
+                            mlDiv.innerHTML = `
+                                <div class="ml-analysis">
+                                    <div class="ml-header" onclick="toggleMLAnalysis(this)" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                                        <span>🧠 AI Analysis</span>
+                                        <span class="ml-toggle-arrow" style="font-size: 12px; transition: transform 0.2s;">▼</span>
                                     </div>
-                                `;
+                                    <div class="ml-content" style="display: block;">
+                                        <div class="ml-insights">
+                                            ${analysis.insights.map(insight => `<div class="ml-insight">${insight}</div>`).join('')}
+                                        </div>
+                                        <div class="ml-score">Risk Score: ${analysis.riskScore}% | Confidence: ${analysis.confidence}%</div>
+                                    </div>
+                                </div>
+                            `;
 
-                                // Insert after the user message
-                                lastUserMessage.parentNode.insertBefore(mlDiv, lastUserMessage.nextSibling);
-                                scrollToBottom();
-                            }
-                        }, 300);
+                            // Simply append to the chat container
+                            this.container.appendChild(mlDiv);
+                            scrollToBottom();
+                        }, 500);
                     }
                 } catch (error) {
                     console.error('❌ Bedrock emotion analysis failed:', error);
@@ -4388,9 +4382,9 @@
                                 </li>
                             `).join('') : `
                                 <li style="padding: 10px; margin-bottom: 8px; background: var(--bg); border-radius: 8px; color: var(--text);">
-                                    • ${riskScore < 0.2 ? 'No significant concerns detected - maintaining healthy patterns' : 
-                                         riskScore < 0.4 ? 'Some areas for attention identified - overall stable' :
-                                         'Analysis in progress - please check back for detailed insights'}
+                                    • ${riskScore < 0.2 ? 'No significant concerns detected - maintaining healthy patterns' :
+                    riskScore < 0.4 ? 'Some areas for attention identified - overall stable' :
+                        'Analysis in progress - please check back for detailed insights'}
                                 </li>
                             `}
                         </ul>
