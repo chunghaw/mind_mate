@@ -12,10 +12,7 @@ def _resp(status, body):
     return {
         "statusCode": status,
         "headers": {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "https://main.d3pktquxaop3su.amplifyapp.com",
-            "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-            "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+            "Content-Type": "application/json"
         },
         "body": json.dumps(body)
     }
