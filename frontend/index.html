@@ -638,8 +638,11 @@
 
                     if (!code) return false;
 
+                    console.log('🔄 Processing OAuth callback with code:', code.substring(0, 20) + '...');
+
                     try {
                         // Exchange code for tokens
+                        console.log('🔄 Exchanging code for tokens...');
                         const tokenResponse = await fetch(`https://${COGNITO_DOMAIN}/oauth2/token`, {
                             method: 'POST',
                             headers: {
@@ -654,6 +657,7 @@
                         });
 
                         const tokens = await tokenResponse.json();
+                        console.log('🔄 Token response received:', tokens.access_token ? 'Success' : 'Failed');
 
                         if (tokens.id_token) {
                             // Decode JWT to get user info
@@ -667,8 +671,11 @@
                             localStorage.setItem('mindmate_email', email);
                             googleUserEmail = email;
 
+                            console.log('✅ User authenticated:', email);
+
                             // Check if user has set username/password
                             try {
+                                console.log('🔄 Checking user profile...');
                                 const response = await fetch(`${API_BASE}/profile`, {
                                     headers: { 'Authorization': `Bearer ${tokens.id_token}` }
                                 });
@@ -677,26 +684,35 @@
                                 if (data.profile && data.profile.hasPassword) {
                                     // User has already set password, check onboarding
                                     if (data.profile.onboardingComplete) {
+                                        console.log('✅ User onboarding complete, redirecting to main app');
                                         window.location.href = '/mind-mate-hackathon.html';
                                     } else {
+                                        console.log('🔄 User needs to complete onboarding');
                                         showScreen('personalityScreen');
                                     }
                                 } else {
                                     // First time Google user - need to set username/password
+                                    console.log('🔄 New user, showing password setup');
                                     showScreen('setPasswordScreen');
                                 }
                             } catch (error) {
                                 // If profile doesn't exist, show set password screen
+                                console.log('🔄 Profile not found, showing password setup');
                                 showScreen('setPasswordScreen');
                             }
 
                             // Clean URL
                             window.history.replaceState({}, document.title, window.location.pathname);
                             return true;
+                        } else {
+                            console.error('❌ No ID token received:', tokens);
+                            alert('Authentication failed: No ID token received. Please try again.');
+                            showScreen('welcomeScreen');
                         }
                     } catch (error) {
-                        console.error('OAuth callback error:', error);
-                        showError('loginError', 'Failed to sign in with Google. Please try again.');
+                        console.error('❌ OAuth callback error:', error);
+                        alert('Authentication failed: ' + error.message + '. Please try again.');
+                        showScreen('welcomeScreen');
                     }
 
                     return false;
@@ -984,17 +1000,29 @@
 
                 // Check if already logged in or handle OAuth callback
                 window.onload = async () => {
-                    // First, check for OAuth callback
-                    const hasCallback = await handleOAuthCallback();
+                    console.log('🚀 Page loaded, checking authentication...');
+                    
+                    try {
+                        // First, check for OAuth callback
+                        const hasCallback = await handleOAuthCallback();
 
-                    if (!hasCallback) {
-                        // Check if user is already logged in
-                        const token = localStorage.getItem('mindmate_token');
-                        const onboardingComplete = localStorage.getItem('mindmate_onboardingComplete');
+                        if (!hasCallback) {
+                            console.log('🔄 No OAuth callback, checking existing login...');
+                            // Check if user is already logged in
+                            const token = localStorage.getItem('mindmate_token');
+                            const onboardingComplete = localStorage.getItem('mindmate_onboardingComplete');
 
-                        if (token && onboardingComplete === 'true') {
-                            window.location.href = '/mind-mate-hackathon.html';
+                            if (token && onboardingComplete === 'true') {
+                                console.log('✅ User already logged in, redirecting to main app');
+                                window.location.href = '/mind-mate-hackathon.html';
+                            } else {
+                                console.log('🔄 No existing login, showing welcome screen');
+                                showScreen('welcomeScreen');
+                            }
                         }
+                    } catch (error) {
+                        console.error('❌ Error during page load:', error);
+                        showScreen('welcomeScreen');
                     }
                 };
             </script>
