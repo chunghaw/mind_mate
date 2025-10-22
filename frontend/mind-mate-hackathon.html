@@ -694,7 +694,9 @@
             cursor: not-allowed;
         }
 
-        .camera-btn, .voice-btn, .image-btn {
+        .camera-btn,
+        .voice-btn,
+        .image-btn {
             width: 40px;
             height: 40px;
             background: var(--primary);
@@ -710,7 +712,9 @@
             flex-shrink: 0;
         }
 
-        .camera-btn:hover, .voice-btn:hover, .image-btn:hover {
+        .camera-btn:hover,
+        .voice-btn:hover,
+        .image-btn:hover {
             background: var(--primary-dark);
             transform: scale(1.05);
         }
@@ -721,8 +725,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
         }
 
         /* Camera Modal */
@@ -1196,9 +1207,12 @@
                 <h1 class="onboarding-title">Mind Mate</h1>
                 <p class="onboarding-subtitle">Your AI Pet Companion for Mental Wellness</p>
                 <button class="onboarding-btn" onclick="startOnboarding()">🌟 Get Started</button>
-                <button class="onboarding-btn" onclick="startTestUserDemo()" style="background: #f59e0b; margin-top: 12px;">🧪 Enter as Test User</button>
+                <button class="onboarding-btn" onclick="startTestUserDemo()"
+                    style="background: #f59e0b; margin-top: 12px;">🧪 Enter as Test User</button>
                 <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
-                    Already have an account? <a href="#" style="color: #4ade80; text-decoration: none; font-weight: 600;" onclick="showSignIn(); return false;">Sign In</a>
+                    Already have an account? <a href="#"
+                        style="color: #4ade80; text-decoration: none; font-weight: 600;"
+                        onclick="showSignIn(); return false;">Sign In</a>
                 </p>
             </div>
         </div>
@@ -1364,18 +1378,23 @@
 
                 <!-- Input Area -->
                 <div class="input-area">
-                    <button class="camera-btn" onclick="openCamera()" id="cameraBtn" aria-label="Take selfie" title="Take a selfie for emotion analysis">
+                    <button class="camera-btn" onclick="openCamera()" id="cameraBtn" aria-label="Take selfie"
+                        title="Take a selfie for emotion analysis">
                         📷
                     </button>
-                    <button class="voice-btn" onclick="toggleVoiceMode()" id="voiceBtn" aria-label="Voice mode" title="Hold to speak">
+                    <button class="voice-btn" onclick="toggleVoiceMode()" id="voiceBtn" aria-label="Voice mode"
+                        title="Hold to speak">
                         🎤
                     </button>
-                    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
-                    <button class="image-btn" onclick="document.getElementById('imageInput').click()" aria-label="Attach file">
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;"
+                        onchange="handleImageUpload(event)">
+                    <button class="image-btn" onclick="document.getElementById('imageInput').click()"
+                        aria-label="Attach file">
                         📎
                     </button>
-                    <input type="text" class="input-field" id="messageInput" placeholder="Share your thoughts or attach an image..."
-                        onkeypress="handleKeyPress(event)" aria-label="Message input">
+                    <input type="text" class="input-field" id="messageInput"
+                        placeholder="Share your thoughts or attach an image..." onkeypress="handleKeyPress(event)"
+                        aria-label="Message input">
                     <button class="send-btn" onclick="sendMessage()" id="sendBtn" aria-label="Send message">
                         ➤
                     </button>
@@ -1456,7 +1475,7 @@
             localStorage.setItem('mindmate_userId', 'demo_ml_user'); // ML demo user with rich data
             localStorage.setItem('mindmate_email', 'demo@mindmate.ai');
             localStorage.setItem('mindmate_username', 'alexchen');
-            
+
             // Set up demo pet and personality
             localStorage.setItem('mindmate_personality', 'gentle');
             localStorage.setItem('mindmate_pet_image', 'Gentle Guardian.jpeg');
@@ -1464,10 +1483,10 @@
             localStorage.setItem('mindmate_petName', 'Buddy');
             localStorage.setItem('mindmate_userName', 'Alex Chen');
             localStorage.setItem('mindmate_onboarding_complete', 'true');
-            
+
             // Hide onboarding overlay and start demo
             document.getElementById('onboardingOverlay').classList.add('hidden');
-            
+
             // Refresh the page to load with demo data
             window.location.reload();
         }
@@ -1700,89 +1719,169 @@
 
                 AppState.chat.messages.push(message);
                 this.renderMessage(message);
-                
+
                 // Add ML interpretation for user messages (demo purposes)
                 if (type === 'user' && !metadata.skipMLAnalysis) {
                     this.addMLInterpretation(text);
                 }
-                
+
                 scrollToBottom();
             }
 
-            addMLInterpretation(userText) {
-                // Analyze user message and show ML insights
-                const analysis = this.analyzeMessageForML(userText);
-                
-                if (analysis.insights.length > 0) {
-                    setTimeout(() => {
-                        const mlDiv = document.createElement('div');
-                        mlDiv.className = 'ml-interpretation';
-                        mlDiv.innerHTML = `
-                            <div class="ml-analysis">
-                                <div class="ml-header">🧠 ML Analysis</div>
-                                <div class="ml-insights">
-                                    ${analysis.insights.map(insight => `<div class="ml-insight">${insight}</div>`).join('')}
+            async addMLInterpretation(userText) {
+                // Use Bedrock AI for intelligent emotion analysis
+                try {
+                    console.log('🧠 Analyzing emotions with Bedrock AI...');
+                    const analysis = await this.analyzeEmotionsWithBedrock(userText);
+
+                    if (analysis.insights && analysis.insights.length > 0) {
+                        setTimeout(() => {
+                            const mlDiv = document.createElement('div');
+                            mlDiv.className = 'ml-interpretation';
+                            mlDiv.innerHTML = `
+                                <div class="ml-analysis">
+                                    <div class="ml-header">🧠 ML Analysis</div>
+                                    <div class="ml-insights">
+                                        ${analysis.insights.map(insight => `<div class="ml-insight">${insight}</div>`).join('')}
+                                    </div>
+                                    <div class="ml-score">Risk Score: ${analysis.riskScore}% | Confidence: ${analysis.confidence}%</div>
                                 </div>
-                                <div class="ml-score">Risk Score: ${analysis.riskScore}% | Confidence: ${analysis.confidence}%</div>
-                            </div>
-                        `;
-                        this.container.appendChild(mlDiv);
-                        scrollToBottom();
-                    }, 500);
+                            `;
+                            this.container.appendChild(mlDiv);
+                            scrollToBottom();
+                        }, 500);
+                    }
+                } catch (error) {
+                    console.error('Bedrock emotion analysis failed:', error);
+                    // Don't show analysis if it fails
                 }
             }
 
-            analyzeMessageForML(text) {
+            async analyzeEmotionsWithBedrock(message) {
+                try {
+                    const response = await fetch(`${API_BASE}/analyze-emotions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: message,
+                            userId: USER_ID
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('✅ Bedrock emotion analysis:', data);
+                    return data;
+                } catch (error) {
+                    console.error('❌ Bedrock emotion analysis failed:', error);
+                    // Fallback to simple analysis
+                    return {
+                        insights: ['Analysis temporarily unavailable'],
+                        riskScore: 20,
+                        confidence: 0
+                    };
+                }
+            }
+
+            async analyzeMessageWithComprehend(text) {
+                try {
+                    // Call the sentiment analysis API endpoint
+                    const response = await fetch(`${API_BASE}/analyze-sentiment`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            text: text,
+                            userId: USER_ID
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Sentiment API failed: ${response.status}`);
+                    }
+
+                    const sentimentData = await response.json();
+
+                    const insights = [];
+                    let riskScore = 20; // Base risk
+                    let confidence = Math.round(sentimentData.confidence * 100) || 85;
+
+                    // Use AWS Comprehend sentiment results
+                    const sentiment = sentimentData.sentiment;
+                    const score = sentimentData.sentimentScore;
+
+                    if (sentiment === 'NEGATIVE') {
+                        insights.push(`📉 Negative sentiment detected (${(score.Negative * 100).toFixed(0)}% confidence)`);
+                        riskScore += Math.round(score.Negative * 30);
+                    } else if (sentiment === 'POSITIVE') {
+                        insights.push(`✅ Positive sentiment detected (${(score.Positive * 100).toFixed(0)}% confidence)`);
+                        riskScore = Math.max(10, riskScore - Math.round(score.Positive * 20));
+                    } else if (sentiment === 'MIXED') {
+                        insights.push(`🔄 Mixed emotions detected (${(score.Mixed * 100).toFixed(0)}% confidence)`);
+                        riskScore += Math.round(score.Mixed * 15);
+                    } else if (sentiment === 'NEUTRAL') {
+                        insights.push(`😐 Neutral sentiment (${(score.Neutral * 100).toFixed(0)}% confidence)`);
+                    }
+
+                    // Crisis keywords detection (still useful for immediate risk)
+                    const lowerText = text.toLowerCase();
+                    const crisisWords = ['hopeless', 'pointless', 'give up', 'end it', 'can\'t go on', 'worthless', 'no point', 'want to die', 'kill myself'];
+                    const foundCrisis = crisisWords.filter(word => lowerText.includes(word));
+                    if (foundCrisis.length > 0) {
+                        insights.push(`🚨 Crisis language detected: "${foundCrisis[0]}"`);
+                        riskScore += 40;
+                    }
+
+                    // Isolation indicators
+                    const isolationWords = ['alone', 'lonely', 'no one understands', 'nobody cares', 'isolated'];
+                    const foundIsolation = isolationWords.filter(word => lowerText.includes(word));
+                    if (foundIsolation.length > 0) {
+                        insights.push(`🏠 Social isolation indicator: "${foundIsolation[0]}"`);
+                        riskScore += 20;
+                    }
+
+                    return {
+                        insights,
+                        riskScore: Math.min(95, riskScore),
+                        confidence,
+                        sentiment: sentiment
+                    };
+
+                } catch (error) {
+                    console.error('AWS Comprehend analysis failed:', error);
+                    // Fallback to basic analysis without the faulty keyword matching
+                    return this.basicSentimentFallback(text);
+                }
+            }
+
+            basicSentimentFallback(text) {
                 const insights = [];
-                let riskScore = 20; // Base risk
-                let confidence = 85;
-                
+                let riskScore = 20;
+                let confidence = 60; // Lower confidence for fallback
+
                 const lowerText = text.toLowerCase();
-                
-                // Crisis keywords detection
+
+                // Only check for clear negative patterns, not individual words
+                if (lowerText.includes('not feeling good') || lowerText.includes('feeling bad') ||
+                    lowerText.includes('not good') || lowerText.includes('feel terrible')) {
+                    insights.push(`📉 Negative expression detected`);
+                    riskScore += 25;
+                } else if (lowerText.includes('feeling great') || lowerText.includes('really good') ||
+                    lowerText.includes('much better') || lowerText.includes('very happy')) {
+                    insights.push(`✅ Positive expression detected`);
+                    riskScore = Math.max(10, riskScore - 15);
+                }
+
+                // Crisis keywords
                 const crisisWords = ['hopeless', 'pointless', 'give up', 'end it', 'can\'t go on', 'worthless', 'no point'];
                 const foundCrisis = crisisWords.filter(word => lowerText.includes(word));
                 if (foundCrisis.length > 0) {
                     insights.push(`🚨 Crisis language detected: "${foundCrisis[0]}"`);
                     riskScore += 40;
                 }
-                
-                // Negative sentiment
-                const negativeWords = ['overwhelm', 'exhausted', 'tired', 'sad', 'depressed', 'anxious', 'stressed', 'worried'];
-                const foundNegative = negativeWords.filter(word => lowerText.includes(word));
-                if (foundNegative.length > 0) {
-                    insights.push(`📉 Negative sentiment: "${foundNegative[0]}" (AWS Comprehend)`);
-                    riskScore += 15;
-                }
-                
-                // Sleep issues
-                if (lowerText.includes('sleep') || lowerText.includes('tired') || lowerText.includes('racing')) {
-                    insights.push(`😴 Sleep disruption pattern detected`);
-                    riskScore += 10;
-                }
-                
-                // Isolation indicators
-                const isolationWords = ['alone', 'lonely', 'no one', 'nobody'];
-                const foundIsolation = isolationWords.filter(word => lowerText.includes(word));
-                if (foundIsolation.length > 0) {
-                    insights.push(`🏠 Social isolation indicator: "${foundIsolation[0]}"`);
-                    riskScore += 20;
-                }
-                
-                // Positive indicators
-                const positiveWords = ['good', 'great', 'happy', 'optimistic', 'better'];
-                const foundPositive = positiveWords.filter(word => lowerText.includes(word));
-                if (foundPositive.length > 0) {
-                    insights.push(`✅ Positive sentiment: "${foundPositive[0]}"`);
-                    riskScore = Math.max(10, riskScore - 15);
-                }
-                
-                // Behavioral patterns
-                if (lowerText.includes('work') && (lowerText.includes('good') || lowerText.includes('well'))) {
-                    insights.push(`💼 Positive work engagement detected`);
-                    riskScore = Math.max(10, riskScore - 10);
-                }
-                
+
                 return {
                     insights,
                     riskScore: Math.min(95, riskScore),
@@ -1868,11 +1967,13 @@
                 // Clear messages from state
                 AppState.chat.messages = [];
 
-                // Add welcome message
-                this.addMessage('companion',
-                    "Hi! I'm your AI companion. How are you feeling today?",
-                    { isWelcome: true }
-                );
+                // Add welcome message based on user type
+                const isDemoUser = USER_ID === 'demo_ml_user';
+                const welcomeMessage = isDemoUser
+                    ? "Hi Alex! I'm Buddy, your AI companion. I've been analyzing your mood patterns over the past 2 weeks. I noticed some concerning trends - let's talk about how you're feeling."
+                    : "Hi! I'm your AI companion. I'm here to support your mental wellness journey. How are you feeling today?";
+
+                this.addMessage('companion', welcomeMessage, { isWelcome: true });
 
                 console.log('✅ Chat interface reset');
             }
@@ -1908,10 +2009,10 @@
         // ===== API CLIENT =====
         class APIClient {
             static async calculateRisk(userId) {
-                // Check if we're in demo mode or using demo user
-                const isDemoMode = localStorage.getItem('demoMode') === 'true' || userId === 'demo_ml_user';
-                
-                if (isDemoMode) {
+                // Only use demo data for the specific demo user
+                const isDemoUser = userId === 'demo_ml_user';
+
+                if (isDemoUser) {
                     console.log('🎭 Demo mode detected, returning rich ML demo data...');
                     return this.getDemoMLData();
                 }
@@ -2102,17 +2203,17 @@
         async function clearChat() {
             // Show confirmation dialog with options
             const clearLocal = confirm('Clear chat history?\n\nOK = Clear current session only\nCancel = Keep history');
-            
+
             if (clearLocal) {
                 try {
                     // Clear the chat messages from the UI
                     const chatContainer = document.getElementById('chatMessages');
                     chatContainer.innerHTML = '';
-                    
+
                     // Reset chat state
                     AppState.chat.messages = [];
                     AppState.chat.isTyping = false;
-                    
+
                     // Add a system message indicating chat was cleared
                     const systemMessage = {
                         id: Date.now(),
@@ -2121,7 +2222,7 @@
                         timestamp: new Date().toISOString(),
                         type: 'system'
                     };
-                    
+
                     // Add the system message to state and UI
                     AppState.chat.messages.push(systemMessage);
                     if (chatInterface && chatInterface.addMessage) {
@@ -2138,10 +2239,10 @@
                         `;
                         chatContainer.appendChild(messageEl);
                     }
-                    
+
                     scrollToBottom();
                     console.log('💬 Chat history cleared');
-                    
+
                 } catch (error) {
                     console.error('Error clearing chat:', error);
                     alert('Failed to clear chat history. Please try again.');
@@ -2155,9 +2256,9 @@
                 const chatContainer = document.getElementById('chatMessages');
                 chatContainer.innerHTML = '';
                 AppState.chat.messages = [];
-                
+
                 console.log('📜 Loading demo chat history...');
-                
+
                 // Demo chat history showing mood decline and ML analysis
                 const demoHistory = [
                     {
@@ -2166,7 +2267,7 @@
                         timestamp: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000).toISOString()
                     },
                     {
-                        sender: 'user', 
+                        sender: 'user',
                         text: 'Hi Buddy! Had a good day at work today. Feeling pretty optimistic.',
                         timestamp: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000 + 300000).toISOString()
                     },
@@ -2241,22 +2342,22 @@
                         timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 300000).toISOString()
                     }
                 ];
-                
+
                 // Add system message
                 chatInterface.addMessage('companion', '📜 Loading your conversation history... This shows how my ML system detected your mood decline and triggered interventions.');
-                
+
                 // Add messages with delay for demo effect
                 for (let i = 0; i < demoHistory.length; i++) {
                     setTimeout(() => {
                         const msg = demoHistory[i];
                         chatInterface.addMessage(msg.sender, msg.text);
-                        
+
                         // Scroll to bottom after each message
                         setTimeout(() => {
                             const chatContainer = document.getElementById('chatMessages');
                             chatContainer.scrollTop = chatContainer.scrollHeight;
                         }, 100);
-                        
+
                         // Add final summary message
                         if (i === demoHistory.length - 1) {
                             setTimeout(() => {
@@ -2265,9 +2366,9 @@
                         }
                     }, i * 800); // 800ms delay between messages
                 }
-                
+
                 console.log('✅ Demo chat history loaded');
-                
+
             } catch (error) {
                 console.error('Error loading chat history:', error);
                 chatInterface.addMessage('companion', 'Sorry, I had trouble loading the chat history. Please try again.');
@@ -2279,52 +2380,52 @@
         let chatInterface;
 
         // ===== MAIN FUNCTIONS =====
-        
+
         // Global variable to store selected image
         let selectedImage = null;
-        
+
         async function handleImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
+
             // Validate file type
             if (!file.type.startsWith('image/')) {
                 alert('Please select an image file');
                 return;
             }
-            
+
             // Validate file size (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
                 alert('Image too large. Please select an image under 5MB');
                 return;
             }
-            
+
             try {
                 // Convert to base64
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     selectedImage = {
                         data: e.target.result.split(',')[1], // Remove data:image/jpeg;base64, prefix
                         type: file.type,
                         name: file.name
                     };
-                    
+
                     // Show preview in message input
                     const input = document.getElementById('messageInput');
                     input.placeholder = `📷 Image selected: ${file.name} - Add a message or send as is`;
                     input.style.background = '#e8f5e8';
-                    
+
                     // Auto-send the image
                     sendMessage();
                 };
                 reader.readAsDataURL(file);
-                
+
             } catch (error) {
                 console.error('Error processing image:', error);
                 alert('Error processing image. Please try again.');
             }
         }
-        
+
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
@@ -2747,6 +2848,13 @@
         }
 
         function getReportHTML(riskData = null) {
+            const isDemoUser = USER_ID === 'demo_ml_user';
+
+            // Show different content for new users
+            if (!isDemoUser && (!riskData || riskData.riskScore < 0.3)) {
+                return getNewUserReportHTML();
+            }
+
             const today = new Date();
             const getDayLabel = (offset) => {
                 const date = new Date(today);
@@ -2925,6 +3033,70 @@
             switchTab('dashboard');
         }
 
+        function getNewUserReportHTML() {
+            return `
+                <div style="padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafb;">
+                    
+                    <!-- Welcome Card -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px; border-radius: 16px; margin-bottom: 20px; color: white; text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 12px;">🌟</div>
+                        <h2 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700;">Welcome to Mind Mate!</h2>
+                        <p style="margin: 0; font-size: 16px; opacity: 0.9; line-height: 1.6;">Your AI-powered mental wellness journey starts here. Let's build your wellness profile together.</p>
+                    </div>
+                    
+                    <!-- Getting Started -->
+                    <div style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="font-size: 32px;">🚀</div>
+                            <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #1e293b;">Getting Started</h3>
+                        </div>
+                        <div style="font-size: 15px; color: #475569; line-height: 1.8; margin-bottom: 16px;">
+                            To unlock your personalized AI analysis, start by:
+                        </div>
+                        <div style="display: grid; gap: 12px;">
+                            <div style="background: #f0f9ff; padding: 16px; border-radius: 12px; border-left: 4px solid #3b82f6;">
+                                <div style="font-weight: 600; color: #1e40af; margin-bottom: 4px;">📝 Log Your First Mood</div>
+                                <div style="font-size: 14px; color: #64748b;">Use the Quick Mood button below to track how you're feeling</div>
+                            </div>
+                            <div style="background: #f0fdf4; padding: 16px; border-radius: 12px; border-left: 4px solid #16a34a;">
+                                <div style="font-weight: 600; color: #15803d; margin-bottom: 4px;">💬 Chat with Your AI Companion</div>
+                                <div style="font-size: 14px; color: #64748b;">Share your thoughts and feelings to help the AI understand you better</div>
+                            </div>
+                            <div style="background: #fefce8; padding: 16px; border-radius: 12px; border-left: 4px solid #eab308;">
+                                <div style="font-weight: 600; color: #a16207; margin-bottom: 4px;">📊 Watch Your Patterns Emerge</div>
+                                <div style="font-size: 14px; color: #64748b;">After a few days, you'll see personalized ML insights and predictions</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- What to Expect -->
+                    <div style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="font-size: 32px;">🧠</div>
+                            <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #1e293b;">What to Expect</h3>
+                        </div>
+                        <div style="font-size: 15px; color: #475569; line-height: 1.8;">
+                            <strong>Real AI Analysis:</strong> Our system uses AWS Comprehend and machine learning to analyze your mood patterns, detect sentiment changes, and predict potential mental health concerns 3-7 days in advance.
+                            <br><br>
+                            <strong>Privacy First:</strong> All your data is encrypted and secure. You control what you share and can delete your data anytime.
+                            <br><br>
+                            <strong>Personalized Support:</strong> The more you interact, the better your AI companion understands your unique patterns and needs.
+                        </div>
+                    </div>
+                    
+                    <!-- Demo Option -->
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 16px; border: 2px dashed #cbd5e1; text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">👀</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #475569; margin-bottom: 8px;">Want to see it in action?</div>
+                        <div style="font-size: 14px; color: #64748b; margin-bottom: 16px;">Check out our demo user with 2 weeks of data and ML analysis</div>
+                        <button onclick="window.location.href='demo-bypass.html'" style="background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                            🚀 View Demo
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
         function showFullReportModal() {
             const modal = document.getElementById('modalOverlay');
             const modalBody = document.getElementById('modalBody');
@@ -3038,10 +3210,10 @@
 
         // ===== LOAD CHAT HISTORY =====
         async function loadChatHistory() {
-            // Check if we're in demo mode
-            const isDemoMode = localStorage.getItem('demoMode') === 'true' || USER_ID === 'demo_ml_user';
-            
-            if (isDemoMode) {
+            // Only load demo data for the specific demo user
+            const isDemoUser = USER_ID === 'demo_ml_user';
+
+            if (isDemoUser) {
                 console.log('🎭 Demo mode detected, loading demo chat history...');
                 loadDemoChatHistory();
                 return;
@@ -3257,7 +3429,7 @@
                 // Log ML method used
                 const method = riskData.method || 'unknown';
                 console.log(`📊 Analysis method: ${method}`);
-                
+
                 if (method === 'ml_ensemble') {
                     console.log('✅ Using trained ML models (Random Forest + Gradient Boosting)');
                 } else if (method === 'rule_based') {
@@ -3266,7 +3438,7 @@
 
                 // Check if we have meaningful data or need to enhance it
                 const hasLimitedData = Object.keys(riskData.features || {}).length < 10;
-                
+
                 if (hasLimitedData) {
                     console.log('⚠️ Limited ML features detected, enhancing analysis...');
                     // Enhance the analysis with more realistic data for demo
@@ -3299,7 +3471,7 @@
                     AppState.wellness.featuresAnalyzed = Object.keys(riskData.features || {}).length;
                     AppState.wellness.riskFactors = riskData.riskFactors || [];
                 }
-                
+
                 AppState.wellness.method = method;
                 AppState.wellness.lastUpdated = new Date();
 
@@ -3408,11 +3580,11 @@
                             </div>
                         </div>
                         <div style="background: #f8fafc; border-radius: 8px; padding: 12px; font-size: 14px; color: var(--text-light);">
-                            <strong>Analysis Method:</strong> ${AppState.wellness.method === 'ml_ensemble' ? 
-                                '🤖 ML Ensemble (Random Forest + Gradient Boosting)' : 
-                                AppState.wellness.method === 'rule_based' ? 
-                                '📋 Rule-based Analysis (ML models unavailable)' : 
-                                '❓ Unknown method'}
+                            <strong>Analysis Method:</strong> ${AppState.wellness.method === 'ml_ensemble' ?
+                    '🤖 ML Ensemble (Random Forest + Gradient Boosting)' :
+                    AppState.wellness.method === 'rule_based' ?
+                        '📋 Rule-based Analysis (ML models unavailable)' :
+                        '❓ Unknown method'}
                             <br>
                             <strong>Features:</strong> Mood patterns, sentiment analysis, behavioral trends, engagement metrics
                         </div>
@@ -3506,15 +3678,15 @@
                 const modal = document.getElementById('cameraModal');
                 const video = document.getElementById('cameraVideo');
                 const status = document.getElementById('cameraStatus');
-                
+
                 status.textContent = 'Starting camera...';
                 modal.style.display = 'flex';
-                
-                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+
+                cameraStream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: 'user' },
-                    audio: false 
+                    audio: false
                 });
-                
+
                 video.srcObject = cameraStream;
                 status.textContent = 'Camera ready! Position yourself and click capture.';
             } catch (error) {
@@ -3536,47 +3708,47 @@
                 const video = document.getElementById('cameraVideo');
                 const canvas = document.getElementById('cameraCanvas');
                 const status = document.getElementById('cameraStatus');
-                
+
                 // Set canvas size to match video
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
-                
+
                 // Draw video frame to canvas
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0);
-                
+
                 // Convert to base64
                 const imageData = canvas.toDataURL('image/jpeg', 0.8);
                 const base64Data = imageData.split(',')[1]; // Remove data:image/jpeg;base64, prefix
-                
+
                 status.textContent = 'Sending selfie to AI...';
-                
+
                 // Close camera first
                 closeCamera();
-                
+
                 // Create image object for chat
                 const imageForChat = {
                     data: base64Data,
                     type: 'image/jpeg',
                     name: 'selfie.jpg'
                 };
-                
+
                 // Show typing indicator
                 AppState.chat.isTyping = true;
                 chatInterface.showTyping();
-                
+
                 // Send to chat with Bedrock analysis
                 try {
                     const aiResponse = await sendChatMessage('Here\'s how I\'m feeling right now', imageForChat);
                     chatInterface.hideTyping();
-                    
+
                     // Add messages to chat
                     chatInterface.addMessage('user', '📷 Selfie - Here\'s how I\'m feeling right now');
                     if (aiResponse) {
                         chatInterface.addMessage('companion', aiResponse);
                     }
                     AppState.chat.isTyping = false;
-                    
+
                 } catch (error) {
                     console.error('Chat error:', error);
                     chatInterface.hideTyping();
@@ -3584,7 +3756,7 @@
                     chatInterface.addMessage('companion', 'I can see your selfie! Thanks for sharing how you\'re feeling with me.');
                     AppState.chat.isTyping = false;
                 }
-                
+
             } catch (error) {
                 console.error('Capture error:', error);
                 document.getElementById('cameraStatus').textContent = 'Error taking selfie. Please try again.';
@@ -3605,12 +3777,12 @@
                 console.log('Speech recognition not supported');
                 return false;
             }
-            
+
             recognition.continuous = false;
             recognition.interimResults = false;
             recognition.lang = 'en-US';
-            
-            recognition.onstart = function() {
+
+            recognition.onstart = function () {
                 console.log('Voice recognition started');
                 isRecording = true;
                 const voiceBtn = document.getElementById('voiceBtn');
@@ -3618,29 +3790,29 @@
                 voiceBtn.textContent = '🔴';
                 document.getElementById('messageInput').placeholder = 'Listening...';
             };
-            
-            recognition.onresult = function(event) {
+
+            recognition.onresult = function (event) {
                 const transcript = event.results[0][0].transcript;
                 document.getElementById('messageInput').value = transcript;
                 console.log('Voice input:', transcript);
             };
-            
-            recognition.onend = function() {
+
+            recognition.onend = function () {
                 isRecording = false;
                 const voiceBtn = document.getElementById('voiceBtn');
                 voiceBtn.classList.remove('recording');
                 voiceBtn.textContent = '🎤';
                 document.getElementById('messageInput').placeholder = 'Share your thoughts or hold mic to speak...';
             };
-            
-            recognition.onerror = function(event) {
+
+            recognition.onerror = function (event) {
                 console.error('Speech recognition error:', event.error);
                 isRecording = false;
                 const voiceBtn = document.getElementById('voiceBtn');
                 voiceBtn.classList.remove('recording');
                 voiceBtn.textContent = '🎤';
             };
-            
+
             return true;
         }
 
@@ -3649,7 +3821,7 @@
                 alert('Voice recognition is not supported in your browser. Please use Chrome or Safari.');
                 return;
             }
-            
+
             if (isRecording) {
                 recognition.stop();
             } else {
@@ -3662,56 +3834,56 @@
                 console.log('Speech synthesis not supported');
                 return;
             }
-            
+
             // Cancel any ongoing speech
             speechSynthesis.cancel();
-            
+
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = 0.9;
             utterance.pitch = 1.0;
             utterance.volume = 0.8;
-            
+
             // Try to use a more natural voice
             const voices = speechSynthesis.getVoices();
-            const preferredVoice = voices.find(voice => 
-                voice.name.includes('Google') || 
+            const preferredVoice = voices.find(voice =>
+                voice.name.includes('Google') ||
                 voice.name.includes('Microsoft') ||
                 voice.name.includes('Alex') ||
                 voice.name.includes('Samantha')
             );
-            
+
             if (preferredVoice) {
                 utterance.voice = preferredVoice;
             }
-            
+
             speechSynthesis.speak(utterance);
         }
 
         // Enhance the chat interface to support voice output
         if (chatInterface && chatInterface.addMessage) {
             const originalAddMessage = chatInterface.addMessage;
-            chatInterface.addMessage = function(sender, message, options = {}) {
+            chatInterface.addMessage = function (sender, message, options = {}) {
                 // Call original function
                 originalAddMessage.call(this, sender, message, options);
-            
-            // If it's a companion message and voice is enabled, speak it
-            if (sender === 'companion' && !message.includes('📊') && !message.includes('*')) {
-                // Clean up message for speech (remove emojis and special characters)
-                const cleanMessage = message.replace(/[📊💚🧠📈📉⚠️✅❌🎯💡📱🔄]/g, '').trim();
-                if (cleanMessage.length > 0 && cleanMessage.length < 200) {
-                    setTimeout(() => speakText(cleanMessage), 500);
+
+                // If it's a companion message and voice is enabled, speak it
+                if (sender === 'companion' && !message.includes('📊') && !message.includes('*')) {
+                    // Clean up message for speech (remove emojis and special characters)
+                    const cleanMessage = message.replace(/[📊💚🧠📈📉⚠️✅❌🎯💡📱🔄]/g, '').trim();
+                    if (cleanMessage.length > 0 && cleanMessage.length < 200) {
+                        setTimeout(() => speakText(cleanMessage), 500);
+                    }
                 }
-            }
-        };
+            };
         }
 
         // Initialize speech recognition on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             initializeSpeechRecognition();
-            
+
             // Load voices for speech synthesis
             if (speechSynthesis.onvoiceschanged !== undefined) {
-                speechSynthesis.onvoiceschanged = function() {
+                speechSynthesis.onvoiceschanged = function () {
                     console.log('Speech synthesis voices loaded');
                 };
             }

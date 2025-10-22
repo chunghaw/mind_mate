@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Emotion Analysis</title>
+</head>
+<body>
+    <h1>Test Bedrock Emotion Analysis</h1>
+    <input type="text" id="messageInput" placeholder="Enter message to analyze" style="width: 400px;">
+    <button onclick="analyzeEmotion()">Analyze</button>
+    <div id="result" style="margin-top: 20px; padding: 20px; border: 1px solid #ccc;"></div>
+
+    <script>
+        const API_BASE = "https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com";
+
+        async function analyzeEmotion() {
+            const message = document.getElementById('messageInput').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!message) {
+                resultDiv.innerHTML = 'Please enter a message';
+                return;
+            }
+
+            resultDiv.innerHTML = 'Analyzing with Bedrock AI...';
+
+            try {
+                const response = await fetch(`${API_BASE}/analyze-emotions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: message,
+                        userId: 'test-user'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>🧠 Bedrock Analysis Results:</h3>
+                    <p><strong>Message:</strong> "${message}"</p>
+                    <p><strong>Insights:</strong></p>
+                    <ul>
+                        ${data.insights.map(insight => `<li>${insight}</li>`).join('')}
+                    </ul>
+                    <p><strong>Risk Score:</strong> ${data.riskScore}%</p>
+                    <p><strong>Confidence:</strong> ${data.confidence}%</p>
+                    <p><strong>Raw Emotion Data:</strong></p>
+                    <pre>${JSON.stringify(data.emotionData, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Test cases
+        window.onload = function() {
+            const testCases = [
+                "not feeling good",
+                "I'm really happy today",
+                "feeling hopeless and alone",
+                "everything is great"
+            ];
+            
+            const select = document.createElement('select');
+            select.onchange = function() {
+                document.getElementById('messageInput').value = this.value;
+            };
+            
+            const defaultOption = document.createElement('option');
+            defaultOption.text = 'Select test case...';
+            defaultOption.value = '';
+            select.add(defaultOption);
+            
+            testCases.forEach(testCase => {
+                const option = document.createElement('option');
+                option.text = testCase;
+                option.value = testCase;
+                select.add(option);
+            });
+            
+            document.body.insertBefore(select, document.getElementById('messageInput'));
+            document.body.insertBefore(document.createElement('br'), document.getElementById('messageInput'));
+        };
+    </script>
+</body>
+</html>

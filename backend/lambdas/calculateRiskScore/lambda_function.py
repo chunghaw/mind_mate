@@ -86,15 +86,26 @@ def extract_all_features(user_id):
                 print(f"✅ Extracted {len(mood_features)} mood features")
         except Exception as e:
             print(f"⚠️ Mood features extraction failed: {e}")
-            # Add default mood features for demo
-            features.update({
-                'mood_trend_7day': -0.6,
-                'mood_mean_7day': 3.2,
-                'mood_std_7day': 1.4,
-                'consecutive_low_days': 3,
-                'mood_volatility': 0.78,
-                'total_mood_entries': 14
-            })
+            # Only add demo data for the specific demo user
+            if user_id == 'demo_ml_user':
+                features.update({
+                    'mood_trend_7day': -0.6,
+                    'mood_mean_7day': 3.2,
+                    'mood_std_7day': 1.4,
+                    'consecutive_low_days': 3,
+                    'mood_volatility': 0.78,
+                    'total_mood_entries': 14
+                })
+            else:
+                # New users start with neutral baseline
+                features.update({
+                    'mood_trend_7day': 0.0,
+                    'mood_mean_7day': 7.0,
+                    'mood_std_7day': 0.5,
+                    'consecutive_low_days': 0,
+                    'mood_volatility': 0.1,
+                    'total_mood_entries': 0
+                })
         
         # Try to extract sentiment features
         try:
@@ -110,15 +121,26 @@ def extract_all_features(user_id):
                 print(f"✅ Extracted {len(sentiment_features)} sentiment features")
         except Exception as e:
             print(f"⚠️ Sentiment features extraction failed: {e}")
-            # Add default sentiment features for demo
-            features.update({
-                'negative_sentiment_frequency': 0.75,
-                'positive_sentiment_frequency': 0.15,
-                'crisis_keywords': 2,
-                'hopelessness_score': 0.82,
-                'isolation_keywords': 3,
-                'total_messages_analyzed': 26
-            })
+            # Only add demo data for the specific demo user
+            if user_id == 'demo_ml_user':
+                features.update({
+                    'negative_sentiment_frequency': 0.75,
+                    'positive_sentiment_frequency': 0.15,
+                    'crisis_keywords': 2,
+                    'hopelessness_score': 0.82,
+                    'isolation_keywords': 3,
+                    'total_messages_analyzed': 26
+                })
+            else:
+                # New users start with neutral baseline
+                features.update({
+                    'negative_sentiment_frequency': 0.1,
+                    'positive_sentiment_frequency': 0.3,
+                    'crisis_keywords': 0,
+                    'hopelessness_score': 0.1,
+                    'isolation_keywords': 0,
+                    'total_messages_analyzed': 0
+                })
         
         # Try to extract behavioral features
         try:
@@ -134,32 +156,57 @@ def extract_all_features(user_id):
                 print(f"✅ Extracted {len(behavioral_features)} behavioral features")
         except Exception as e:
             print(f"⚠️ Behavioral features extraction failed: {e}")
-            # Add default behavioral features for demo
-            features.update({
-                'daily_checkin_frequency': 0.85,
-                'engagement_decline': 0.65,
-                'late_night_usage_frequency': 4,
-                'help_seeking_frequency': 0.2
-            })
+            # Only add demo data for the specific demo user
+            if user_id == 'demo_ml_user':
+                features.update({
+                    'daily_checkin_frequency': 0.85,
+                    'engagement_decline': 0.65,
+                    'late_night_usage_frequency': 4,
+                    'help_seeking_frequency': 0.2
+                })
+            else:
+                # New users start with neutral baseline
+                features.update({
+                    'daily_checkin_frequency': 0.0,
+                    'engagement_decline': 0.0,
+                    'late_night_usage_frequency': 0,
+                    'help_seeking_frequency': 0.0
+                })
         
         print(f"✅ Total extracted features: {len(features)}")
         return features
         
     except Exception as e:
         print(f"❌ Error extracting features: {e}")
-        # Return demo features as fallback
-        return {
-            'mood_trend_7day': -0.6,
-            'mood_mean_7day': 3.2,
-            'consecutive_low_days': 3,
-            'negative_sentiment_frequency': 0.75,
-            'crisis_keywords': 2,
-            'hopelessness_score': 0.82,
-            'daily_checkin_frequency': 0.85,
-            'engagement_decline': 0.65,
-            'total_mood_entries': 14,
-            'total_messages_analyzed': 26
-        }
+        # Return appropriate fallback based on user
+        if user_id == 'demo_ml_user':
+            # Demo user gets demo data
+            return {
+                'mood_trend_7day': -0.6,
+                'mood_mean_7day': 3.2,
+                'consecutive_low_days': 3,
+                'negative_sentiment_frequency': 0.75,
+                'crisis_keywords': 2,
+                'hopelessness_score': 0.82,
+                'daily_checkin_frequency': 0.85,
+                'engagement_decline': 0.65,
+                'total_mood_entries': 14,
+                'total_messages_analyzed': 26
+            }
+        else:
+            # New users get neutral baseline
+            return {
+                'mood_trend_7day': 0.0,
+                'mood_mean_7day': 7.0,
+                'consecutive_low_days': 0,
+                'negative_sentiment_frequency': 0.1,
+                'crisis_keywords': 0,
+                'hopelessness_score': 0.1,
+                'daily_checkin_frequency': 0.0,
+                'engagement_decline': 0.0,
+                'total_mood_entries': 0,
+                'total_messages_analyzed': 0
+            }
 
 def prepare_feature_vector(features):
     """Prepare feature vector for ML model prediction"""
