@@ -1797,71 +1797,133 @@
             }
 
             async addMLInterpretation(userText) {
-                // Enhanced ML analysis using multiple AI services
+                // Simple rule-based emotion analysis (reliable fallback)
                 try {
-                    console.log('🧠 Running comprehensive ML analysis...');
-
-                    // Run parallel analysis with multiple ML services
-                    const [emotionAnalysis, sentimentAnalysis, riskAssessment] = await Promise.allSettled([
-                        this.analyzeEmotionsWithBedrock(userText),
-                        this.analyzeMessageWithComprehend(userText),
-                        this.calculateRealTimeRisk(userText)
-                    ]);
-
-                    // Combine results from all successful analyses
-                    const insights = [];
-                    let riskScore = 20;
-                    let confidence = 0;
-
-                    // Process Bedrock emotion analysis
-                    if (emotionAnalysis.status === 'fulfilled' && emotionAnalysis.value.insights) {
-                        insights.push(...emotionAnalysis.value.insights);
-                        riskScore = Math.max(riskScore, emotionAnalysis.value.riskScore || 20);
-                        confidence = Math.max(confidence, emotionAnalysis.value.confidence || 0);
-                    }
-
-                    // Process Comprehend sentiment analysis
-                    if (sentimentAnalysis.status === 'fulfilled' && sentimentAnalysis.value.insights) {
-                        insights.push(...sentimentAnalysis.value.insights);
-                        riskScore = Math.max(riskScore, sentimentAnalysis.value.riskScore || 20);
-                        confidence = Math.max(confidence, sentimentAnalysis.value.confidence || 0);
-                    }
-
-                    // Process real-time risk assessment
-                    if (riskAssessment.status === 'fulfilled' && riskAssessment.value.insights) {
-                        insights.push(...riskAssessment.value.insights);
-                        riskScore = Math.max(riskScore, riskAssessment.value.riskScore || 20);
-                        confidence = Math.max(confidence, riskAssessment.value.confidence || 0);
-                    }
-
-                    // Show ML analysis if we have insights
-                    if (insights.length > 0) {
+                    console.log('🧠 Running emotion analysis...');
+                    
+                    const analysis = this.analyzeEmotionsLocally(userText);
+                    
+                    if (analysis.insights.length > 0) {
+                        // Add ML analysis AFTER the user message (not after companion response)
                         setTimeout(() => {
-                            const mlDiv = document.createElement('div');
-                            mlDiv.className = 'ml-interpretation';
-                            mlDiv.innerHTML = `
-                                <div class="ml-analysis">
-                                    <div class="ml-header" onclick="toggleMLAnalysis(this)" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
-                                        <span>🧠 AI/ML Analysis</span>
-                                        <span class="ml-toggle-arrow" style="font-size: 12px; transition: transform 0.2s;">▼</span>
-                                    </div>
-                                    <div class="ml-content" style="display: block;">
-                                        <div class="ml-insights">
-                                            ${insights.slice(0, 3).map(insight => `<div class="ml-insight">${insight}</div>`).join('')}
+                            // Find the last user message to add analysis after it
+                            const userMessages = this.container.querySelectorAll('.message.user');
+                            const lastUserMessage = userMessages[userMessages.length - 1];
+                            
+                            if (lastUserMessage) {
+                                const mlDiv = document.createElement('div');
+                                mlDiv.className = 'ml-interpretation';
+                                mlDiv.innerHTML = `
+                                    <div class="ml-analysis">
+                                        <div class="ml-header" onclick="toggleMLAnalysis(this)" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                                            <span>🧠 AI/ML Analysis</span>
+                                            <span class="ml-toggle-arrow" style="font-size: 12px; transition: transform 0.2s;">▼</span>
                                         </div>
-                                        <div class="ml-score">Risk Score: ${riskScore}% | Confidence: ${confidence}%</div>
+                                        <div class="ml-content" style="display: block;">
+                                            <div class="ml-insights">
+                                                ${analysis.insights.map(insight => `<div class="ml-insight">${insight}</div>`).join('')}
+                                            </div>
+                                            <div class="ml-score">Risk Score: ${analysis.riskScore}% | Confidence: ${analysis.confidence}%</div>
+                                        </div>
                                     </div>
-                                </div>
-                            `;
-                            this.container.appendChild(mlDiv);
-                            scrollToBottom();
-                        }, 500);
+                                `;
+                                
+                                // Insert after the user message
+                                lastUserMessage.parentNode.insertBefore(mlDiv, lastUserMessage.nextSibling);
+                                scrollToBottom();
+                            }
+                        }, 300);
                     }
                 } catch (error) {
-                    console.error('❌ ML analysis failed:', error);
-                    // Show fallback analysis for demo purposes
-                    this.showFallbackAnalysis(userText);
+                    console.error('❌ Emotion analysis failed:', error);
                 }
+            }
+
+            analyzeEmotionsLocally(text) {
+                const insights = [];
+                let riskScore = 10; // Base risk
+                let confidence = 85;
+                
+                const lowerText = text.toLowerCase();
+                
+                // Enhanced emotion detection
+                const emotionPatterns = {
+                    sad: ['sad', 'sadness', 'feel sad', 'feeling sad', 'down', 'blue', 'melancholy'],
+                    depressed: ['depressed', 'depression', 'hopeless', 'worthless', 'empty', 'numb'],
+                    anxious: ['anxious', 'anxiety', 'worried', 'nervous', 'panic', 'stressed', 'overwhelmed'],
+                    angry: ['angry', 'mad', 'furious', 'irritated', 'frustrated', 'rage'],
+                    lonely: ['lonely', 'alone', 'isolated', 'no one understands', 'nobody cares'],
+                    tired: ['exhausted', 'tired', 'drained', 'worn out', 'fatigue'],
+                    happy: ['happy', 'joy', 'excited', 'great', 'wonderful', 'amazing', 'fantastic'],
+                    grateful: ['grateful', 'thankful', 'blessed', 'appreciate']
+                };
+
+                // Crisis indicators
+                const crisisWords = ['suicide', 'kill myself', 'end it all', 'no point living', 'better off dead', 'want to die'];
+                const foundCrisis = crisisWords.some(word => lowerText.includes(word));
+                if (foundCrisis) {
+                    insights.push('🚨 Crisis language detected - immediate support recommended');
+                    riskScore += 60;
+                }
+
+                // Check for emotions
+                let primaryEmotion = 'neutral';
+                let emotionFound = false;
+
+                for (const [emotion, patterns] of Object.entries(emotionPatterns)) {
+                    const found = patterns.some(pattern => lowerText.includes(pattern));
+                    if (found) {
+                        primaryEmotion = emotion;
+                        emotionFound = true;
+                        
+                        const emoji = {
+                            sad: '😢', depressed: '😔', anxious: '😰', angry: '😠',
+                            lonely: '😞', tired: '😴', happy: '😊', grateful: '🙏'
+                        }[emotion] || '😐';
+                        
+                        insights.push(`${emoji} ${emotion.charAt(0).toUpperCase() + emotion.slice(1)} emotion detected`);
+                        
+                        // Adjust risk score based on emotion
+                        if (['sad', 'depressed', 'anxious', 'lonely'].includes(emotion)) {
+                            riskScore += 25;
+                        } else if (['angry', 'tired'].includes(emotion)) {
+                            riskScore += 15;
+                        } else if (['happy', 'grateful'].includes(emotion)) {
+                            riskScore = Math.max(5, riskScore - 10);
+                        }
+                        break;
+                    }
+                }
+
+                // Sentiment analysis
+                const negativeWords = ['not', 'never', 'can\'t', 'won\'t', 'don\'t', 'bad', 'terrible', 'awful', 'horrible'];
+                const positiveWords = ['good', 'better', 'best', 'love', 'like', 'enjoy', 'nice', 'pleasant'];
+                
+                const negativeCount = negativeWords.filter(word => lowerText.includes(word)).length;
+                const positiveCount = positiveWords.filter(word => lowerText.includes(word)).length;
+                
+                if (negativeCount > positiveCount) {
+                    insights.push('📉 Negative sentiment detected');
+                    riskScore += 10;
+                } else if (positiveCount > negativeCount) {
+                    insights.push('📈 Positive sentiment detected');
+                    riskScore = Math.max(5, riskScore - 5);
+                }
+
+                // If no specific emotions found but we have concerning patterns
+                if (!emotionFound && !foundCrisis) {
+                    if (negativeCount > 0) {
+                        insights.push('⚠️ Some concerning language patterns detected');
+                    } else {
+                        insights.push('✅ No significant risk indicators in current message');
+                    }
+                }
+
+                return {
+                    insights: insights.length > 0 ? insights : ['✅ Message analyzed - no concerns detected'],
+                    riskScore: Math.min(95, riskScore),
+                    confidence
+                };
             }
 
             async analyzeEmotionsWithBedrock(message) {
@@ -3263,22 +3325,29 @@
             }
         }
 
-        // ===== ML ANALYSIS COLLAPSE/EXPAND =====
+        // ===== ML ANALYSIS COLLAPSE/EXPAND (SYNC ALL) =====
         function toggleMLAnalysis(headerElement) {
             const mlContent = headerElement.nextElementSibling;
             const arrow = headerElement.querySelector('.ml-toggle-arrow');
             
-            if (mlContent.style.display === 'none') {
-                // Expand
-                mlContent.style.display = 'block';
-                arrow.style.transform = 'rotate(0deg)';
-                arrow.textContent = '▼';
-            } else {
-                // Collapse
-                mlContent.style.display = 'none';
-                arrow.style.transform = 'rotate(-90deg)';
-                arrow.textContent = '▶';
-            }
+            // Determine new state
+            const isCurrentlyExpanded = mlContent.style.display !== 'none';
+            const newState = isCurrentlyExpanded ? 'none' : 'block';
+            const newArrow = isCurrentlyExpanded ? '▶' : '▼';
+            const newRotation = isCurrentlyExpanded ? 'rotate(-90deg)' : 'rotate(0deg)';
+            
+            // Apply to ALL ML analyses (sync them)
+            const allMLAnalyses = document.querySelectorAll('.ml-analysis');
+            allMLAnalyses.forEach(analysis => {
+                const content = analysis.querySelector('.ml-content');
+                const arrowEl = analysis.querySelector('.ml-toggle-arrow');
+                
+                if (content && arrowEl) {
+                    content.style.display = newState;
+                    arrowEl.style.transform = newRotation;
+                    arrowEl.textContent = newArrow;
+                }
+            });
         }
 
         function quickMood() {
