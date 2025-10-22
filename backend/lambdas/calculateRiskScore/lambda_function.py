@@ -1,14 +1,54 @@
 import json
 import os
 import boto3
+import joblib
+import numpy as np
 from datetime import datetime, timedelta
 from decimal import Decimal
 
 # AWS Clients
 lambda_client = boto3.client('lambda')
+s3_client = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
 risk_table = dynamodb.Table(os.environ.get('RISK_ASSESSMENTS_TABLE', 'MindMate-RiskAssessments'))
 chat_table = dynamodb.Table(os.environ.get('CHAT_HISTORY_TABLE', 'EmoCompanion'))
+
+# Model cache for SageMaker-trained models
+_models_cache = {}
+
+def load_ml_models():
+    """Load SageMaker-trained ML models from S3"""
+    global _models_cache
+    
+    if 'rf_model' in _models_cache and 'gb_model' in _models_cache:
+        return _models_cache['rf_model'], _models_cache['gb_model']
+    
+    try:
+        bucket = os.environ.get('MODEL_BUCKET', 'mindmate-ml-models')
+        
+        # Download SageMaker-trained models from S3
+        rf_path = '/tmp/rf_model.pkl'
+        gb_path = '/tmp/gb_model.pkl'
+        
+        print("🔄 Loading SageMaker-trained models from S3...")
+        s3_client.download_file(bucket, 'models/rf_model.pkl', rf_path)
+        s3_client.download_file(bucket, 'models/gb_model.pkl', gb_path)
+        
+        # Load models using joblib
+        rf_model = joblib.load(rf_path)
+        gb_model = joblib.load(gb_path)
+        
+        # Cache models in Lambda memory
+        _models_cache['rf_model'] = rf_model
+        _models_cache['gb_model'] = gb_model
+        
+        print("✅ SageMaker ML models loaded successfully")
+        return rf_model, gb_model
+        
+    except Exception as e:
+        print(f"❌ Error loading SageMaker models: {e}")
+        print("🔄 Falling back to rule-based analysis...")
+        return None, None
 
 def decimal_to_float(obj):
     """Convert DynamoDB Decimal to float"""
