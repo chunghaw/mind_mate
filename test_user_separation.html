@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test User Separation</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .user-info { background: #f0f8ff; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .error { color: red; }
+        .success { color: green; }
+        button { padding: 8px 16px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔒 User Separation Test</h1>
+    
+    <div class="test-section">
+        <h3>Current User Info</h3>
+        <div id="currentUser" class="user-info">Loading...</div>
+        <button onclick="checkCurrentUser()">Refresh User Info</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Different User IDs</h3>
+        <input type="text" id="testUserId" placeholder="Enter test user ID" style="width: 300px;">
+        <button onclick="testUserData()">Test User Data</button>
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Authentication Test</h3>
+        <button onclick="clearAuth()">Clear Authentication</button>
+        <button onclick="setTestAuth()">Set Test Auth</button>
+        <div id="authResults"></div>
+    </div>
+
+    <script>
+        const API_BASE = "https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com";
+
+        function getUserId() {
+            // Same logic as main app
+            const authenticatedUserId = localStorage.getItem('mindmate_userId');
+            if (authenticatedUserId) {
+                return authenticatedUserId;
+            }
+
+            const idToken = localStorage.getItem('mindmate_id_token');
+            if (idToken) {
+                try {
+                    const payload = JSON.parse(atob(idToken.split('.')[1]));
+                    const cognitoUserId = payload.sub;
+                    if (cognitoUserId) {
+                        localStorage.setItem('mindmate_userId', cognitoUserId);
+                        return cognitoUserId;
+                    }
+                } catch (e) {
+                    console.error('Error parsing ID token:', e);
+                }
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlUserId = urlParams.get('userId');
+            if (urlUserId) {
+                return urlUserId;
+            }
+
+            return 'no-auth-found';
+        }
+
+        function checkCurrentUser() {
+            const userId = getUserId();
+            const hasAuth = localStorage.getItem('mindmate_id_token');
+            const hasUserId = localStorage.getItem('mindmate_userId');
+            
+            document.getElementById('currentUser').innerHTML = `
+                <strong>User ID:</strong> ${userId}<br>
+                <strong>Has ID Token:</strong> ${hasAuth ? 'Yes' : 'No'}<br>
+                <strong>Has Stored User ID:</strong> ${hasUserId ? 'Yes' : 'No'}<br>
+                <strong>Auth Status:</strong> ${userId !== 'no-auth-found' ? '✅ Authenticated' : '❌ Not Authenticated'}
+            `;
+        }
+
+        async function testUserData() {
+            const testUserId = document.getElementById('testUserId').value;
+            if (!testUserId) {
+                alert('Please enter a user ID to test');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = 'Testing...';
+
+            try {
+                // Test chat history
+                const chatResponse = await fetch(`https://4tybbjkqlkwewxgawzcjjhdzty0hygwv.lambda-url.us-east-1.on.aws?userId=${testUserId}`);
+                const chatData = await chatResponse.json();
+
+                // Test risk calculation
+                const riskResponse = await fetch(`${API_BASE}/calculate-risk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: testUserId })
+                });
+                const riskData = await riskResponse.json();
+
+                resultsDiv.innerHTML = `
+                    <h4>Results for User: ${testUserId}</h4>
+                    <div class="success">
+                        <strong>Chat Messages:</strong> ${chatData.messages ? chatData.messages.length : 0}<br>
+                        <strong>Risk Score:</strong> ${riskData.riskScore || 'N/A'}<br>
+                        <strong>Risk Level:</strong> ${riskData.riskLevel || 'N/A'}<br>
+                        <strong>Features:</strong> ${riskData.features ? Object.keys(riskData.features).length : 0}
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function clearAuth() {
+            localStorage.removeItem('mindmate_userId');
+            localStorage.removeItem('mindmate_id_token');
+            localStorage.removeItem('mindmate_access_token');
+            sessionStorage.clear();
+            
+            document.getElementById('authResults').innerHTML = '<div class="success">Authentication cleared</div>';
+            checkCurrentUser();
+        }
+
+        function setTestAuth() {
+            const testUserId = 'test-user-' + Math.random().toString(36).substring(7);
+            localStorage.setItem('mindmate_userId', testUserId);
+            
+            document.getElementById('authResults').innerHTML = `<div class="success">Test auth set: ${testUserId}</div>`;
+            checkCurrentUser();
+        }
+
+        // Initialize
+        checkCurrentUser();
+    </script>
+</body>
+</html>

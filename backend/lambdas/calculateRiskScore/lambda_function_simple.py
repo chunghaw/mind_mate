@@ -380,151 +380,8 @@ def store_risk_assessment(user_id, risk_data):
         print(f"Error storing risk assessment: {e}")
         return None
 
-def analyze_realtime_message(user_id, message):
-    """Analyze a single message for real-time risk assessment"""
-    try:
-        print(f"🔍 Real-time analysis for message: {message[:50]}...")
-        
-        # Quick sentiment analysis
-        risk_score = 0.2  # Base risk
-        risk_factors = []
-        
-        message_lower = message.lower()
-        
-        # Crisis keywords (immediate high risk)
-        crisis_words = ['suicide', 'kill myself', 'end my life', 'want to die', 'better off dead']
-        for word in crisis_words:
-            if word in message_lower:
-                risk_score = 0.9
-                risk_factors.append(f"CRITICAL: Crisis language detected - '{word}'")
-                break
-        
-        # Despair indicators
-        despair_words = ['hopeless', 'pointless', 'give up', 'can\'t go on', 'worthless', 'no point']
-        for word in despair_words:
-            if word in message_lower:
-                risk_score = max(risk_score, 0.7)
-                risk_factors.append(f"High concern: Despair language - '{word}'")
-                break
-        
-        # Isolation indicators
-        isolation_words = ['alone', 'lonely', 'no one understands', 'nobody cares', 'isolated']
-        for word in isolation_words:
-            if word in message_lower:
-                risk_score = max(risk_score, 0.5)
-                risk_factors.append(f"Social isolation indicator - '{word}'")
-                break
-        
-        # Positive indicators
-        positive_words = ['better', 'improving', 'hopeful', 'grateful', 'good day', 'feeling good']
-        for word in positive_words:
-            if word in message_lower:
-                risk_score = max(0.1, risk_score - 0.2)
-                risk_factors.append(f"Positive indicator - '{word}'")
-                break
-        
-        if not risk_factors:
-            risk_factors.append("No significant risk indicators in current message")
-        
-        # Determine risk level
-        if risk_score >= 0.8:
-            risk_level = 'critical'
-        elif risk_score >= 0.6:
-            risk_level = 'high'
-        elif risk_score >= 0.4:
-            risk_level = 'moderate'
-        elif risk_score >= 0.2:
-            risk_level = 'low'
-        else:
-            risk_level = 'minimal'
-        
-        return {
-            'riskScore': risk_score,
-            'riskLevel': risk_level,
-            'riskFactors': risk_factors,
-            'confidence': 75,
-            'method': 'realtime_analysis',
-            'features': {'realtime_message_length': len(message)}
-        }
-        
-    except Exception as e:
-        print(f"❌ Real-time analysis failed: {e}")
-        return {
-            'riskScore': 0.2,
-            'riskLevel': 'low',
-            'riskFactors': ['Real-time analysis unavailable'],
-            'confidence': 30,
-            'method': 'realtime_fallback',
-            'features': {}
-        }
-
-def calculate_risk_from_features(user_id, features):
-    """Calculate risk using provided ML features"""
-    try:
-        print(f"📊 Calculating risk from {len(features)} provided features")
-        
-        # Use the existing ML model approach
-        rf_model, gb_model = load_ml_models()
-        
-        if rf_model is not None and gb_model is not None:
-            # Use ML models for prediction
-            feature_vector = prepare_feature_vector(features)
-            
-            # Get predictions from both models
-            rf_prob = rf_model.predict_proba(feature_vector)[0][1]
-            gb_prob = gb_model.predict_proba(feature_vector)[0][1]
-            
-            # Ensemble prediction (average)
-            risk_score = float((rf_prob + gb_prob) / 2)
-            method = 'ml_ensemble_provided'
-            
-            # Calculate confidence based on model agreement
-            model_agreement = 1.0 - abs(rf_prob - gb_prob)
-            confidence = int(70 + (model_agreement * 25))
-            
-        else:
-            # Fallback to rule-based scoring
-            risk_score = calculate_rule_based_risk(features)
-            method = 'rule_based_provided'
-            confidence = 65
-        
-        # Get interpretable risk factors
-        risk_factors = get_risk_factors_from_features(features)
-        
-        # Determine risk level
-        if risk_score >= 0.8:
-            risk_level = 'critical'
-        elif risk_score >= 0.6:
-            risk_level = 'high'
-        elif risk_score >= 0.4:
-            risk_level = 'moderate'
-        elif risk_score >= 0.2:
-            risk_level = 'low'
-        else:
-            risk_level = 'minimal'
-        
-        return {
-            'riskScore': risk_score,
-            'riskLevel': risk_level,
-            'riskFactors': risk_factors,
-            'features': features,
-            'confidence': confidence,
-            'method': method
-        }
-        
-    except Exception as e:
-        print(f"❌ Risk calculation from features failed: {e}")
-        return {
-            'riskScore': 0.2,
-            'riskLevel': 'low',
-            'riskFactors': ['Feature-based analysis failed'],
-            'features': features,
-            'confidence': 30,
-            'method': 'features_fallback'
-        }
-
 def lambda_handler(event, context):
-    """Calculate risk score for a user with enhanced ML capabilities"""
+    """Calculate risk score for a user"""
     try:
         # Handle CORS preflight
         if event.get('httpMethod') == 'OPTIONS':
@@ -533,62 +390,34 @@ def lambda_handler(event, context):
         # Parse request body
         body = json.loads(event.get('body', '{}'))
         user_id = body.get('userId')
-        realtime_message = body.get('realtimeMessage')  # For real-time analysis
-        provided_features = body.get('features')  # Pre-extracted features
         
         if not user_id:
             return _resp(400, {'error': 'userId is required'})
         
-        print(f"🧠 Calculating ML-enhanced risk for user: {user_id}")
+        print(f"Calculating risk for user: {user_id}")
         
-        # Handle real-time message analysis
-        if realtime_message:
-            print(f"📝 Analyzing real-time message: {realtime_message[:50]}...")
-            risk_data = analyze_realtime_message(user_id, realtime_message)
-        elif provided_features:
-            print(f"📊 Using provided features: {len(provided_features)} features")
-            risk_data = calculate_risk_from_features(user_id, provided_features)
-        else:
-            # Standard comprehensive risk calculation
-            risk_data = calculate_risk_score(user_id)
+        # Calculate risk score
+        risk_data = calculate_risk_score(user_id)
         
-        # Store assessment (only for comprehensive analysis)
-        timestamp = None
-        if not realtime_message:
-            timestamp = store_risk_assessment(user_id, risk_data)
+        # Store assessment
+        timestamp = store_risk_assessment(user_id, risk_data)
         
-        # Trigger interventions if needed (only for high/critical risk)
-        intervention_triggered = False
-        if risk_data['riskLevel'] in ['high', 'critical']:
-            intervention_triggered = trigger_intervention(
-                user_id, 
-                risk_data['riskLevel'], 
-                risk_data['riskScore'], 
-                risk_data['riskFactors']
-            )
-        
-        print(f"✅ Risk assessment complete: {risk_data['riskLevel']} ({risk_data['riskScore']:.2f}) via {risk_data.get('method', 'unknown')}")
+        print(f"Risk assessment complete: {risk_data['riskLevel']} ({risk_data['riskScore']:.2f})")
         
         return _resp(200, {
             'ok': True,
             'riskScore': risk_data['riskScore'],
             'riskLevel': risk_data['riskLevel'],
             'riskFactors': risk_data['riskFactors'],
-            'features': risk_data.get('features', {}),
+            'features': risk_data['features'],
             'confidence': risk_data['confidence'],
-            'method': risk_data.get('method', 'ml_analysis'),
+            'method': risk_data['method'],
             'timestamp': timestamp,
-            'interventionTriggered': intervention_triggered,
-            'featureCount': len(risk_data.get('features', {})),
             'message': f'Risk assessment complete: {risk_data["riskLevel"]} risk level'
         })
         
     except Exception as e:
-        print(f"❌ Error in risk calculation: {e}")
+        print(f"Error: {e}")
         import traceback
         traceback.print_exc()
-        return _resp(500, {
-            'error': str(e),
-            'message': 'Risk calculation failed',
-            'fallback': True
-        })
+        return _resp(500, {'error': str(e)})
