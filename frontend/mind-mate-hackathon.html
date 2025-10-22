@@ -2689,45 +2689,24 @@
                     console.error('❌ Sentiment feature extraction failed:', error);
                 }
 
-                // Enhanced fallback based on user type
-                if (userId === 'demo_ml_user') {
-                    return {
-                        sentiment_trend_7day: 0.15,
-                        sentiment_trend_30day: 0.08,
-                        negative_sentiment_frequency: 0.75,
-                        positive_sentiment_frequency: 0.15,
-                        neutral_sentiment_frequency: 0.08,
-                        mixed_sentiment_frequency: 0.02,
-                        avg_negative_score: 0.82,
-                        avg_positive_score: 0.18,
-                        avg_neutral_score: 0.25,
-                        sentiment_volatility: 0.34,
-                        despair_keywords: 4,
-                        isolation_keywords: 3,
-                        hopelessness_score: 0.82,
-                        crisis_keywords: 2,
-                        total_messages_analyzed: 26
-                    };
-                } else {
-                    // New user baseline
-                    return {
-                        sentiment_trend_7day: 0.0,
-                        sentiment_trend_30day: 0.0,
-                        negative_sentiment_frequency: 0.1,
-                        positive_sentiment_frequency: 0.3,
-                        neutral_sentiment_frequency: 0.6,
-                        mixed_sentiment_frequency: 0.0,
-                        avg_negative_score: 0.1,
-                        avg_positive_score: 0.3,
-                        avg_neutral_score: 0.6,
-                        sentiment_volatility: 0.1,
-                        despair_keywords: 0,
-                        isolation_keywords: 0,
-                        hopelessness_score: 0.1,
-                        crisis_keywords: 0,
-                        total_messages_analyzed: 0
-                    };
-                }
+                // Return empty baseline for new users - no fake data
+                return {
+                    sentiment_trend_7day: 0.0,
+                    sentiment_trend_30day: 0.0,
+                    negative_sentiment_frequency: 0.0,
+                    positive_sentiment_frequency: 0.0,
+                    neutral_sentiment_frequency: 0.0,
+                    mixed_sentiment_frequency: 0.0,
+                    avg_negative_score: 0.0,
+                    avg_positive_score: 0.0,
+                    avg_neutral_score: 0.0,
+                    sentiment_volatility: 0.0,
+                    despair_keywords: 0,
+                    isolation_keywords: 0,
+                    hopelessness_score: 0.0,
+                    crisis_keywords: 0,
+                    total_messages_analyzed: 0
+                };
             }
 
             static async extractBehavioralFeatures(userId) {
@@ -2757,49 +2736,26 @@
                     console.error('❌ Behavioral feature extraction failed:', error);
                 }
 
-                // Enhanced fallback based on user type
-                if (userId === 'demo_ml_user') {
-                    return {
-                        daily_checkin_frequency: 0.85,
-                        avg_session_duration: 180.0,
-                        engagement_trend: -0.25,
-                        response_time_trend: 0.15,
-                        activity_completion_rate: 0.45,
-                        selfie_frequency: 0.2,
-                        avg_message_length: 85.4,
-                        negative_word_frequency: 0.18,
-                        help_seeking_frequency: 0.35,
-                        late_night_usage: 4,
-                        weekend_usage_change: -0.3,
-                        usage_consistency: 2.1,
-                        total_interactions: 42,
-                        mood_logs_count: 14,
-                        selfies_count: 6,
-                        chat_messages_count: 22,
-                        engagement_decline: 0.65
-                    };
-                } else {
-                    // New user baseline
-                    return {
-                        daily_checkin_frequency: 0.0,
-                        avg_session_duration: 0.0,
-                        engagement_trend: 0.0,
-                        response_time_trend: 0.0,
-                        activity_completion_rate: 0.0,
-                        selfie_frequency: 0.0,
-                        avg_message_length: 0.0,
-                        negative_word_frequency: 0.0,
-                        help_seeking_frequency: 0.0,
-                        late_night_usage: 0,
-                        weekend_usage_change: 0.0,
-                        usage_consistency: 0.0,
-                        total_interactions: 0,
-                        mood_logs_count: 0,
-                        selfies_count: 0,
-                        chat_messages_count: 0,
-                        engagement_decline: 0.0
-                    };
-                }
+                // Return empty baseline for new users - no fake data
+                return {
+                    daily_checkin_frequency: 0.0,
+                    avg_session_duration: 0.0,
+                    engagement_trend: 0.0,
+                    response_time_trend: 0.0,
+                    activity_completion_rate: 0.0,
+                    selfie_frequency: 0.0,
+                    avg_message_length: 0.0,
+                    negative_word_frequency: 0.0,
+                    help_seeking_frequency: 0.0,
+                    late_night_usage: 0,
+                    weekend_usage_change: 0.0,
+                    usage_consistency: 0.0,
+                    total_interactions: 0,
+                    mood_logs_count: 0,
+                    selfies_count: 0,
+                    chat_messages_count: 0,
+                    engagement_decline: 0.0
+                };
             }
 
             static async calculateMLRisk(features) {
@@ -4284,10 +4240,7 @@
                 // Check if we have meaningful data or need to enhance it
                 const hasLimitedData = Object.keys(riskData.features || {}).length < 10;
                 
-                // TEMPORARY: Always use demo data to avoid negative wellness scores
-                const forceDemo = true;
-
-                if (hasLimitedData || forceDemo) {
+                if (hasLimitedData) {
                     console.log('⚠️ Limited ML features detected, enhancing analysis...');
                     // Enhance the analysis with more realistic data for demo
                     AppState.wellness.score = Math.round(65 + Math.random() * 20); // 65-85 range
@@ -4318,7 +4271,7 @@
                     const riskScore = Math.max(0, Math.min(1, rawRiskScore)); // Ensure 0-1 range
                     console.log(`🔍 Bounded risk score: ${riskScore}`);
                     
-                    const calculatedWellness = Math.round(Math.max(10, 100 - (riskScore * 100)));
+                    const calculatedWellness = Math.round(Math.max(10, Math.min(100, 100 - (riskScore * 100))));
                     console.log(`🔍 Calculated wellness score: ${calculatedWellness}`);
                     
                     AppState.wellness.score = calculatedWellness;
