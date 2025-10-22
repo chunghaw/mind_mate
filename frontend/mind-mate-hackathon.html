@@ -1498,36 +1498,92 @@
 
         // Get authenticated user ID from localStorage (set during onboarding)
         function getUserId() {
-            // First try to get the authenticated user ID from Cognito onboarding
+            // CRITICAL: Always use authenticated user ID first
             const authenticatedUserId = localStorage.getItem('mindmate_userId');
             if (authenticatedUserId) {
+                console.log('✅ Using authenticated user ID:', authenticatedUserId);
                 return authenticatedUserId;
             }
 
-            // Fallback for demo mode or URL params
-            const urlParams = new URLSearchParams(window.location.search);
-            const demoUserId = urlParams.get('userId');
-            if (demoUserId) {
-                return demoUserId;
+            // Check for Cognito tokens to extract user ID
+            const idToken = localStorage.getItem('mindmate_id_token');
+            if (idToken) {
+                try {
+                    const payload = JSON.parse(atob(idToken.split('.')[1]));
+                    const cognitoUserId = payload.sub;
+                    if (cognitoUserId) {
+                        console.log('✅ Using Cognito user ID:', cognitoUserId);
+                        // Store for future use
+                        localStorage.setItem('mindmate_userId', cognitoUserId);
+                        return cognitoUserId;
+                    }
+                } catch (e) {
+                    console.error('Error parsing ID token:', e);
+                }
             }
 
-            // Check if we're in demo mode
+            // URL param override (for testing only)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlUserId = urlParams.get('userId');
+            if (urlUserId) {
+                console.log('⚠️ Using URL param user ID (testing only):', urlUserId);
+                return urlUserId;
+            }
+
+            // Demo mode fallback (only for localhost/demo)
             const isDemoMode = window.location.hostname.includes('localhost') ||
-                window.location.search.includes('demo=true') ||
-                window.location.pathname.includes('hackathon');
+                window.location.search.includes('demo=true');
 
             if (isDemoMode) {
-                return "a48804c8-c051-707b-cc34-d710830e0710"; // Demo user with ML data
+                console.log('⚠️ Using demo user ID (localhost only)');
+                return "demo_ml_user";
             }
 
-            // Generate a fallback ID
-            const browserFingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
-            const hash = btoa(browserFingerprint).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
-            return "demo-user-" + hash;
+            // If no authentication found, redirect to login
+            console.error('❌ No authenticated user found, redirecting to login');
+            window.location.href = '/onboarding.html';
+            return null;
         }
 
         const USER_ID = getUserId();
         console.log('🔑 Using USER_ID:', USER_ID);
+
+        // CRITICAL: Validate user ID is properly set
+        if (!USER_ID || USER_ID === 'null' || USER_ID === 'undefined') {
+            console.error('❌ CRITICAL: No valid user ID found!');
+            alert('Authentication error. Please log in again.');
+            window.location.href = '/onboarding.html';
+        }
+
+        // Clear any cached data that might belong to other users
+        function clearUserCache() {
+            // Clear any cached ML data or dashboard data
+            sessionStorage.clear();
+            // Don't clear localStorage as it contains auth tokens
+        }
+
+        // Ensure we start with a clean slate for this user
+        clearUserCache();
+
+        // Add user info display for debugging (remove in production)
+        function addUserDebugInfo() {
+            const debugDiv = document.createElement('div');
+            debugDiv.id = 'user-debug-info';
+            debugDiv.style.cssText = `
+                position: fixed; top: 10px; right: 10px; 
+                background: rgba(0,0,0,0.8); color: white; 
+                padding: 8px 12px; border-radius: 6px; 
+                font-size: 12px; z-index: 10000;
+                font-family: monospace;
+            `;
+            debugDiv.innerHTML = `User: ${USER_ID.substring(0, 8)}...`;
+            document.body.appendChild(debugDiv);
+        }
+        
+        // Show user debug info (helps verify user separation)
+        if (window.location.search.includes('debug=true')) {
+            addUserDebugInfo();
+        }
 
         // Helper function to get personality display name
         function getPersonalityName(personality) {
@@ -3210,6 +3266,12 @@
 
         // ===== LOAD CHAT HISTORY =====
         async function loadChatHistory() {
+            // CRITICAL: Validate user ID before loading any chat data
+            if (!USER_ID || USER_ID === 'null' || USER_ID === 'undefined') {
+                console.error('❌ CRITICAL: Invalid user ID in loadChatHistory');
+                return;
+            }
+
             // Only load demo data for the specific demo user
             const isDemoUser = USER_ID === 'demo_ml_user';
 
@@ -3220,7 +3282,7 @@
             }
 
             try {
-                console.log('📚 Loading chat history for user:', USER_ID);
+                console.log(`📚 Loading chat history for authenticated user: ${USER_ID}`);
 
                 const response = await fetch(`${CHAT_HISTORY_API}?userId=${USER_ID}`);
 
@@ -3423,7 +3485,13 @@
         // ===== LOAD REAL WELLNESS DATA =====
         async function loadWellnessData() {
             try {
-                console.log('🧠 Loading ML-powered wellness analysis...');
+                // CRITICAL: Validate user ID before loading any data
+                if (!USER_ID || USER_ID === 'null' || USER_ID === 'undefined') {
+                    console.error('❌ CRITICAL: Invalid user ID in loadWellnessData');
+                    throw new Error('Invalid user ID');
+                }
+                
+                console.log(`🧠 Loading ML-powered wellness analysis for user: ${USER_ID}`);
                 const riskData = await APIClient.calculateRisk(USER_ID);
 
                 // Log ML method used
