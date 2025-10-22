@@ -99,58 +99,96 @@ Be accurate and contextually aware. Focus on mental health indicators."""
                 "explanation": "Error parsing emotion analysis"
             }
         
-        # Convert to ML Analysis format for frontend
+        # Enhanced ML Analysis format for frontend
         insights = []
         risk_score = 20  # Base risk
         
-        # Add primary emotion insight
+        # Enhanced emotion mapping with more nuanced analysis
         emotion_emoji = {
             'sad': '😢', 'anxious': '😰', 'hopeless': '😞', 'angry': '😠',
             'happy': '😊', 'neutral': '😐', 'worried': '😟', 'stressed': '😤',
-            'depressed': '😔', 'lonely': '😞', 'overwhelmed': '😵'
+            'depressed': '😔', 'lonely': '😞', 'overwhelmed': '😵', 'frustrated': '😤',
+            'scared': '😨', 'confused': '😕', 'excited': '🤩', 'grateful': '🙏',
+            'tired': '😴', 'numb': '😶', 'empty': '😶‍🌫️'
         }
         
-        emoji = emotion_emoji.get(emotion_data.get('primary_emotion', 'neutral'), '🧠')
-        insights.append(f"{emoji} Primary emotion: {emotion_data.get('primary_emotion', 'unknown')}")
+        primary_emotion = emotion_data.get('primary_emotion', 'neutral')
+        emoji = emotion_emoji.get(primary_emotion, '🧠')
         
-        # Add sentiment analysis
+        # More sophisticated emotion analysis
+        if primary_emotion in ['hopeless', 'depressed', 'empty', 'numb']:
+            insights.append(f"{emoji} Severe emotional distress: {primary_emotion}")
+            risk_score += 35
+        elif primary_emotion in ['sad', 'lonely', 'overwhelmed']:
+            insights.append(f"{emoji} Concerning emotional state: {primary_emotion}")
+            risk_score += 25
+        elif primary_emotion in ['anxious', 'worried', 'stressed', 'scared']:
+            insights.append(f"{emoji} Elevated anxiety/stress: {primary_emotion}")
+            risk_score += 20
+        elif primary_emotion in ['angry', 'frustrated']:
+            insights.append(f"{emoji} Emotional dysregulation: {primary_emotion}")
+            risk_score += 15
+        elif primary_emotion in ['happy', 'excited', 'grateful']:
+            insights.append(f"{emoji} Positive emotional state: {primary_emotion}")
+            risk_score = max(5, risk_score - 20)
+        else:
+            insights.append(f"{emoji} Emotional state: {primary_emotion}")
+        
+        # Enhanced sentiment analysis with context
         sentiment = emotion_data.get('sentiment', 'neutral')
         if sentiment == 'negative':
-            insights.append(f"📉 Negative sentiment detected (Bedrock AI)")
+            insights.append(f"📉 Negative sentiment pattern (AI confidence: {emotion_data.get('confidence', 85)}%)")
             risk_score += 25
         elif sentiment == 'positive':
-            insights.append(f"📈 Positive sentiment detected (Bedrock AI)")
+            insights.append(f"📈 Positive sentiment pattern (AI confidence: {emotion_data.get('confidence', 85)}%)")
             risk_score = max(10, risk_score - 15)
+        else:
+            insights.append(f"😐 Neutral sentiment baseline")
         
-        # Add risk indicators
+        # Enhanced risk indicator processing
         risk_indicators = emotion_data.get('risk_indicators', [])
+        critical_indicators = ['crisis_language', 'suicidal_ideation', 'self_harm']
+        high_risk_indicators = ['hopelessness', 'severe_depression', 'panic']
+        moderate_risk_indicators = ['isolation', 'low_mood', 'anxiety', 'distress']
+        
         for indicator in risk_indicators:
-            if indicator == 'crisis_language':
-                insights.append(f"🚨 Crisis language detected")
-                risk_score += 40
-            elif indicator == 'hopelessness':
-                insights.append(f"😞 Hopelessness indicators found")
+            if indicator in critical_indicators:
+                insights.append(f"🚨 CRITICAL: {indicator.replace('_', ' ').title()} detected")
+                risk_score += 50
+            elif indicator in high_risk_indicators:
+                insights.append(f"⚠️ HIGH RISK: {indicator.replace('_', ' ').title()} indicators")
                 risk_score += 30
-            elif indicator == 'isolation':
-                insights.append(f"🏠 Social isolation signals")
-                risk_score += 20
-            elif indicator == 'low_mood':
-                insights.append(f"📉 Low mood indicators")
+            elif indicator in moderate_risk_indicators:
+                insights.append(f"📊 {indicator.replace('_', ' ').title()} patterns detected")
                 risk_score += 15
-            elif indicator == 'anxiety':
-                insights.append(f"😰 Anxiety markers detected")
-                risk_score += 15
-            elif indicator == 'distress':
-                insights.append(f"😣 Emotional distress signals")
+            else:
+                # Generic risk indicator
+                insights.append(f"🔍 {indicator.replace('_', ' ').title()} noted")
                 risk_score += 10
         
-        # Add explanation if available
+        # Add contextual explanation with length limit
         explanation = emotion_data.get('explanation', '')
-        if explanation and len(explanation) < 100:
-            insights.append(f"💭 {explanation}")
+        if explanation and len(explanation) < 120:
+            # Clean up explanation
+            clean_explanation = explanation.replace('User expresses', 'Detected:').replace('user', 'individual')
+            insights.append(f"💭 {clean_explanation}")
         
-        confidence = emotion_data.get('confidence', 85)
+        # Enhanced confidence calculation
+        base_confidence = emotion_data.get('confidence', 85)
+        # Adjust confidence based on analysis complexity
+        if len(risk_indicators) > 2:
+            confidence = min(95, base_confidence + 5)  # More indicators = higher confidence
+        elif len(risk_indicators) == 0 and primary_emotion == 'neutral':
+            confidence = max(60, base_confidence - 10)  # Less clear signals = lower confidence
+        else:
+            confidence = base_confidence
+        
+        # Cap risk score appropriately
         risk_score = min(95, max(5, risk_score))
+        
+        # Add ML method indicator
+        if len(insights) < 4:  # Ensure we have enough insights
+            insights.append(f"🤖 Analysis method: Bedrock AI + Pattern Recognition")
         
         print(f"✅ Emotion analysis complete for user {user_id}: {emotion_data.get('primary_emotion')} ({sentiment})")
         
