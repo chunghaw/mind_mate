@@ -1,0 +1,10 @@
+{
+  "userId": "test-user",
+  "riskLevel": "high",
+  "riskScore": 0.75,
+  "riskFactors": [
+    "Declining mood trend",
+    "High negative sentiment",
+    "Increased late-night usage"
+  ]
+}

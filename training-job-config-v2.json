@@ -1,0 +1,40 @@
+{
+  "TrainingJobName": "mindmate-risk-model-20251022-v2",
+  "RoleArn": "arn:aws:iam::403745271636:role/MindMate-SageMakerRole",
+  "AlgorithmSpecification": {
+    "TrainingImage": "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.2-1-cpu-py3",
+    "TrainingInputMode": "File",
+    "EnableSageMakerMetricsTimeSeries": true
+  },
+  "InputDataConfig": [
+    {
+      "ChannelName": "training",
+      "DataSource": {
+        "S3DataSource": {
+          "S3DataType": "S3Prefix",
+          "S3Uri": "s3://mindmate-ml-models-403745271636/training-data/",
+          "S3DataDistributionType": "FullyReplicated"
+        }
+      },
+      "ContentType": "text/csv"
+    }
+  ],
+  "OutputDataConfig": {
+    "S3OutputPath": "s3://mindmate-ml-models-403745271636/models/"
+  },
+  "ResourceConfig": {
+    "InstanceType": "ml.m5.xlarge",
+    "InstanceCount": 1,
+    "VolumeSizeInGB": 10
+  },
+  "StoppingCondition": {
+    "MaxRuntimeInSeconds": 3600
+  },
+  "HyperParameters": {
+    "n_estimators": "200",
+    "max_depth": "10",
+    "min_samples_split": "5",
+    "sagemaker_program": "train_simple.py",
+    "sagemaker_submit_directory": "s3://mindmate-ml-models-403745271636/code/sourcedir.tar.gz"
+  }
+}

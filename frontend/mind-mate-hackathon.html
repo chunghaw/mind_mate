@@ -888,6 +888,15 @@
             margin-bottom: 8px;
         }
         
+        .personality-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 12px;
+            border: 3px solid var(--primary);
+        }
+        
         .personality-name {
             font-weight: 600;
             margin-bottom: 4px;
@@ -965,26 +974,26 @@
                 <p class="onboarding-subtitle">Each personality has a unique way of supporting you!</p>
                 
                 <div class="personality-grid">
-                    <div class="personality-option" onclick="selectPet('🐶', 'Gentle Guardian')">
-                        <div class="personality-emoji">🐶</div>
+                    <div class="personality-option" onclick="selectPet('Gentle Guardian.jpeg', 'Gentle Guardian')">
+                        <img src="Gentle Guardian.jpeg" alt="Gentle Guardian" class="personality-image">
                         <div class="personality-name">Gentle Guardian</div>
                         <div class="personality-desc">Nurturing, supportive, patient</div>
                     </div>
                     
-                    <div class="personality-option" onclick="selectPet('🐱', 'Playful Pal')">
-                        <div class="personality-emoji">🐱</div>
+                    <div class="personality-option" onclick="selectPet('Playful Pal.jpeg', 'Playful Pal')">
+                        <img src="Playful Pal.jpeg" alt="Playful Pal" class="personality-image">
                         <div class="personality-name">Playful Pal</div>
                         <div class="personality-desc">Energetic, fun, motivating</div>
                     </div>
                     
-                    <div class="personality-option" onclick="selectPet('🐉', 'Focused Friend')">
-                        <div class="personality-emoji">🐉</div>
+                    <div class="personality-option" onclick="selectPet('Focused Friend.jpeg', 'Focused Friend')">
+                        <img src="Focused Friend.jpeg" alt="Focused Friend" class="personality-image">
                         <div class="personality-name">Focused Friend</div>
                         <div class="personality-desc">Calm, direct, mindful</div>
                     </div>
                     
-                    <div class="personality-option" onclick="selectPet('🦊', 'Sensitive Soul')">
-                        <div class="personality-emoji">🦊</div>
+                    <div class="personality-option" onclick="selectPet('Sensitive Soul.png', 'Sensitive Soul')">
+                        <img src="Sensitive Soul.png" alt="Sensitive Soul" class="personality-image">
                         <div class="personality-name">Sensitive Soul</div>
                         <div class="personality-desc">Empathetic, understanding, validating</div>
                     </div>
@@ -1051,7 +1060,10 @@
         <div class="tab-content active" id="dashboardContent">
             <div class="ai-wellness-hero" id="wellnessHero" style="position: relative; top: 0;">
                 <div class="wellness-score-section">
-                    <div class="wellness-score" id="wellnessScore">0.0</div>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 8px;">
+                        <div class="wellness-score" id="wellnessScore">0</div>
+                        <button onclick="refreshWellnessData()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px;" title="Refresh wellness data">🔄</button>
+                    </div>
                     <div class="wellness-label">Wellness Score</div>
                     <div class="progress-container">
                         <div class="progress-bar" id="progressBar"></div>
@@ -1087,7 +1099,7 @@
         <div class="tab-content" id="chatContent">
             <div class="chat-section">
                 <div class="section-header">
-                    <div class="companion-avatar" id="companionAvatar" onclick="changePet()" style="cursor: pointer;" title="Click to change pet">🐶</div>
+                    <img src="Gentle Guardian.jpeg" alt="Companion" id="companionAvatar" onclick="changePet()" style="cursor: pointer; width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" title="Click to change pet">
                     <div class="companion-info">
                         <div class="companion-name" id="companionName">Your Gentle Guardian</div>
                         <div class="companion-status" id="companionStatus">AI-powered mental health companion</div>
@@ -1153,16 +1165,42 @@
 
     <script>
         // ===== CONFIGURATION =====
-        const API_BASE = "https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com";
+        const API_BASE = "https://5qodz2xqu5.execute-api.us-east-1.amazonaws.com/prod";
         const CHAT_API = "https://7ctr3cdwnfuy2at5qt36mdziee0ugypx.lambda-url.us-east-1.on.aws";
         const CHAT_HISTORY_API = "https://4tybbjkqlkwewxgawzcjjhdzty0hygwv.lambda-url.us-east-1.on.aws";
         
-        // Use consistent user ID (stored in localStorage)
-        const USER_ID = localStorage.getItem('mindmate_user_id') || (() => {
-            const id = "hackathon-demo-" + Date.now();
-            localStorage.setItem('mindmate_user_id', id);
-            return id;
-        })();
+        // Get authenticated user ID from localStorage (set during onboarding)
+        function getUserId() {
+            // First try to get the authenticated user ID from Cognito onboarding
+            const authenticatedUserId = localStorage.getItem('mindmate_userId');
+            if (authenticatedUserId) {
+                return authenticatedUserId;
+            }
+            
+            // Fallback for demo mode or URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            const demoUserId = urlParams.get('userId');
+            if (demoUserId) {
+                return demoUserId;
+            }
+            
+            // Check if we're in demo mode
+            const isDemoMode = window.location.hostname.includes('localhost') || 
+                              window.location.search.includes('demo=true') ||
+                              window.location.pathname.includes('hackathon');
+            
+            if (isDemoMode) {
+                return "hackathon-demo-user";
+            }
+            
+            // Generate a fallback ID
+            const browserFingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
+            const hash = btoa(browserFingerprint).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
+            return "demo-user-" + hash;
+        }
+        
+        const USER_ID = getUserId();
+        console.log('🔑 Using USER_ID:', USER_ID);
         
         // Helper function to get personality display name
         function getPersonalityName(personality) {
@@ -1174,6 +1212,39 @@
             };
             return names[personality] || 'Gentle Guardian';
         }
+        
+        // ===== API CLIENT =====
+        const APIClient = {
+            async calculateRisk(userId) {
+                console.log('🔍 Calculating risk for user:', userId);
+                const response = await fetch(`${API_BASE}/risk/calculate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Risk calculation failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Risk data received:', data);
+                return data;
+            },
+            
+            async getRiskAssessment(userId) {
+                console.log('📊 Getting latest risk assessment for:', userId);
+                const response = await fetch(`${API_BASE}/risk/latest?userId=${userId}`);
+                
+                if (!response.ok) {
+                    // If no assessment exists, calculate one
+                    return await this.calculateRisk(userId);
+                }
+                
+                const data = await response.json();
+                return data;
+            }
+        };
         
         // ===== GLOBAL STATE =====
         const AppState = {
@@ -1252,7 +1323,8 @@
                 if (data.score !== undefined) this.animateScore(data.score);
                 if (data.riskLevel) document.getElementById('riskLevel').textContent = data.riskLevel;
                 if (data.confidence) document.getElementById('mlConfidence').textContent = data.confidence + '%';
-                if (data.score !== undefined) this.updateProgressBar(data.score / 10);
+                if (data.featuresAnalyzed) document.getElementById('featuresAnalyzed').textContent = data.featuresAnalyzed;
+                if (data.score !== undefined) this.updateProgressBar(data.score / 100);
             }
 
             startCountdown() {
@@ -1575,6 +1647,28 @@
                     chatInterface.addMessage('companion', aiResponse);
                 }
                 AppState.chat.isTyping = false;
+                
+                // Check for crisis keywords and refresh dashboard if detected
+                const crisisKeywords = ['suicide', 'kill myself', 'end it', 'die', 'hopeless', 'worthless'];
+                const hasCrisisKeyword = crisisKeywords.some(keyword => 
+                    message.toLowerCase().includes(keyword)
+                );
+                
+                // Also check for positive keywords that should trigger refresh
+                const positiveKeywords = ['happy', 'better', 'good', 'great', 'excited', 'hopeful', 'improving'];
+                const hasPositiveKeyword = positiveKeywords.some(keyword => 
+                    message.toLowerCase().includes(keyword)
+                );
+                
+                if (hasCrisisKeyword) {
+                    console.log('⚠️ Crisis keyword detected, refreshing risk assessment...');
+                    // Refresh dashboard data in background
+                    setTimeout(() => loadWellnessData(), 2000);
+                } else if (hasPositiveKeyword) {
+                    console.log('😊 Positive keyword detected, refreshing risk assessment...');
+                    // Refresh dashboard data in background
+                    setTimeout(() => loadWellnessData(), 3000);
+                }
             } catch (error) {
                 console.error('Error sending message:', error);
                 chatInterface.hideTyping();
@@ -1645,7 +1739,7 @@
                         
                         // Update wellness hero with REAL data
                         wellnessHero.updateMetrics({
-                            score: 10 - riskData.riskScore * 10,
+                            score: 100 - riskData.riskScore * 100,
                             riskLevel: riskData.riskLevel.toUpperCase(),
                             confidence: Math.round(riskData.confidence || 85)
                         });
@@ -1702,7 +1796,7 @@
                     
                     // Update wellness metrics with REAL data
                     wellnessHero.updateMetrics({
-                        score: 10 - riskData.riskScore * 10,
+                        score: 100 - riskData.riskScore * 100,
                         riskLevel: riskData.riskLevel.toUpperCase(),
                         confidence: Math.round(riskData.confidence || 85)
                     });
@@ -1794,7 +1888,7 @@
         }
         
         function resetChat() {
-            if (confirm('Are you sure you want to reset the chat? This will clear all conversation history.')) {
+            if (confirm('Are you sure you want to reset the chat?')) {
                 // Use ChatInterface reset method
                 if (chatInterface) {
                     chatInterface.reset();
@@ -1813,7 +1907,7 @@
         }
         
         function clearAllData() {
-            if (confirm('⚠️ This will log you out and clear ALL data. Are you sure?')) {
+            if (confirm('⚠️ This will log you out. Are you sure?')) {
                 // Clear all localStorage
                 localStorage.clear();
                 
@@ -1824,28 +1918,30 @@
 
         function updateCompanionDisplay() {
             const petName = localStorage.getItem('mindmate_petName') || 'Buddy';
-            const petEmoji = localStorage.getItem('mindmate_pet_emoji') || '🐶';
+            const petImage = localStorage.getItem('mindmate_pet_image') || 'Gentle Guardian.jpeg';
             const personality = localStorage.getItem('mindmate_personality') || 'gentle';
             const personalityName = getPersonalityName(personality);
             
             // Update chat header
-            document.getElementById('companionAvatar').textContent = petEmoji;
+            const avatarEl = document.getElementById('companionAvatar');
+            avatarEl.src = petImage;
+            avatarEl.alt = personalityName;
             document.getElementById('companionName').textContent = petName;
             document.getElementById('companionStatus').textContent = `Your ${personalityName}`;
             
             // Update AppState
             AppState.chat.companion.name = petName;
-            AppState.chat.companion.emoji = petEmoji;
+            AppState.chat.companion.image = petImage;
             AppState.chat.companion.personality = personality;
             AppState.chat.companion.personalityName = personalityName;
         }
 
         function changePet() {
             const personalities = [
-                { emoji: '🐶', name: 'Gentle Guardian', personality: 'gentle', desc: 'Nurturing, supportive, patient' },
-                { emoji: '🐱', name: 'Playful Pal', personality: 'playful', desc: 'Energetic, fun, encouraging' },
-                { emoji: '🐉', name: 'Focused Friend', personality: 'focused', desc: 'Goal-oriented, motivating, structured' },
-                { emoji: '🦊', name: 'Sensitive Soul', personality: 'sensitive', desc: 'Empathetic, understanding, gentle' }
+                { image: 'Gentle Guardian.jpeg', name: 'Gentle Guardian', personality: 'gentle', desc: 'Nurturing, supportive, patient' },
+                { image: 'Playful Pal.jpeg', name: 'Playful Pal', personality: 'playful', desc: 'Energetic, fun, encouraging' },
+                { image: 'Focused Friend.jpeg', name: 'Focused Friend', personality: 'focused', desc: 'Goal-oriented, motivating, structured' },
+                { image: 'Sensitive Soul.png', name: 'Sensitive Soul', personality: 'sensitive', desc: 'Empathetic, understanding, gentle' }
             ];
             
             const currentPersonality = localStorage.getItem('mindmate_personality') || 'gentle';
@@ -1860,15 +1956,17 @@
                     </div>
                     <div style="padding: 20px 0;">
                         ${personalities.map(p => `
-                            <div onclick="selectNewPet('${p.personality}', '${p.emoji}', '${p.name}')" 
+                            <div onclick="selectNewPet('${p.personality}', '${p.image}', '${p.name}')" 
                                  style="padding: 16px; margin: 8px 0; background: ${p.personality === currentPersonality ? '#86efac' : '#f0f9f4'}; 
                                         border: 2px solid ${p.personality === currentPersonality ? '#4ade80' : '#d1fae5'}; 
-                                        border-radius: 12px; cursor: pointer; transition: all 0.2s;"
+                                        border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 16px;"
                                  onmouseover="this.style.background='#d1fae5'" 
                                  onmouseout="this.style.background='${p.personality === currentPersonality ? '#86efac' : '#f0f9f4'}'">
-                                <div style="font-size: 32px; margin-bottom: 8px;">${p.emoji}</div>
-                                <div style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">${p.name}</div>
-                                <div style="font-size: 13px; color: #64748b;">${p.desc}</div>
+                                <img src="${p.image}" alt="${p.name}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">${p.name}</div>
+                                    <div style="font-size: 13px; color: #64748b;">${p.desc}</div>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -1877,12 +1975,12 @@
             document.body.appendChild(modal);
         }
 
-        function selectNewPet(personality, emoji, name) {
+        function selectNewPet(personality, image, name) {
             const petName = localStorage.getItem('mindmate_petName') || 'Buddy';
             
             // Save new personality
             localStorage.setItem('mindmate_personality', personality);
-            localStorage.setItem('mindmate_pet_emoji', emoji);
+            localStorage.setItem('mindmate_pet_image', image);
             
             // Update display
             updateCompanionDisplay();
@@ -1902,13 +2000,16 @@
             if (tabName === 'dashboard') {
                 document.getElementById('dashboardTab').classList.add('active');
                 document.getElementById('dashboardContent').classList.add('active');
+                // Refresh dashboard data
+                loadWellnessData();
             } else if (tabName === 'chat') {
                 document.getElementById('chatTab').classList.add('active');
                 document.getElementById('chatContent').classList.add('active');
             } else if (tabName === 'report') {
                 document.getElementById('reportTab').classList.add('active');
                 document.getElementById('reportContent').classList.add('active');
-                loadReportView();
+                // Update AI Report with latest data
+                updateAIReport();
             }
         }
 
@@ -2175,32 +2276,18 @@
         // ===== CONVERSATIONAL AI CHAT =====
         async function sendChatMessage(userMessage) {
             try {
-                // Get conversation history (last 10 messages, not including current)
-                const history = AppState.chat.messages.slice(-10).map(msg => ({
-                    role: msg.type === 'user' ? 'user' : 'assistant',
-                    content: msg.text
-                }));
+                // Use regular chat endpoint (fallback from agent-chat due to Bedrock permissions)
+                const CHAT_API = 'https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com/chat';
                 
-                console.log('📤 Sending message with', history.length, 'history items');
-                if (history.length > 0) {
-                    console.log('Last history item:', history[history.length - 1]);
-                }
+                console.log('📤 Sending message to chat API');
                 
-                // Add wellness context
-                const systemContext = `You are a compassionate AI mental health companion. The user's current wellness score is ${AppState.wellness.score}/10 with ${AppState.wellness.riskLevel} risk level. Be supportive, empathetic, and encouraging. Keep responses concise (2-3 sentences).`;
-                
-                // Call Bedrock API via Lambda
+                // Call regular chat Lambda
                 const response = await fetch(CHAT_API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         userId: USER_ID,
-                        message: userMessage,
-                        history: history,
-                        context: {
-                            wellnessScore: AppState.wellness.score,
-                            riskLevel: AppState.wellness.riskLevel
-                        }
+                        message: userMessage
                     })
                 });
                 
@@ -2209,11 +2296,11 @@
                 }
                 
                 const data = await response.json();
+                console.log('✅ Chat response received');
                 return data.response || data.message;
                 
             } catch (error) {
-                console.error('Chat API failed:', error);
-                console.error('Chat API URL:', CHAT_API);
+                console.error('❌ Chat failed:', error);
                 console.error('Error details:', error.message);
                 throw error; // Re-throw to handle in UI
             }
@@ -2254,21 +2341,22 @@
 
         
         // ===== ONBOARDING LOGIC =====
-        let selectedPet = { emoji: '🐶', name: 'Gentle Guardian' };
+        let selectedPet = { image: 'Gentle Guardian.jpeg', name: 'Gentle Guardian' };
         
         function startOnboarding() {
             showOnboardingScreen('petSelectionScreen');
         }
         
-        function selectPet(emoji, name) {
-            selectedPet = { emoji, name };
+        function selectPet(image, name) {
+            selectedPet = { image, name };
             document.querySelectorAll('.personality-option').forEach(el => el.classList.remove('selected'));
             event.target.closest('.personality-option').classList.add('selected');
             document.getElementById('continuePetBtn').disabled = false;
         }
         
         function confirmPet() {
-            document.getElementById('petAvatar').textContent = selectedPet.emoji;
+            const petAvatarEl = document.getElementById('petAvatar');
+            petAvatarEl.innerHTML = `<img src="${selectedPet.image}" alt="${selectedPet.name}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">`;
             showOnboardingScreen('nameScreen');
         }
         
@@ -2280,10 +2368,11 @@
             }
             
             localStorage.setItem('mindmate_username', name);
-            localStorage.setItem('mindmate_pet_emoji', selectedPet.emoji);
+            localStorage.setItem('mindmate_pet_image', selectedPet.image);
             localStorage.setItem('mindmate_pet_name', selectedPet.name);
             
-            document.getElementById('introPetAvatar').textContent = selectedPet.emoji;
+            const introPetAvatarEl = document.getElementById('introPetAvatar');
+            introPetAvatarEl.innerHTML = `<img src="${selectedPet.image}" alt="${selectedPet.name}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">`;
             document.getElementById('introMessage').innerHTML = 
                 `Nice to meet you, ${name}! I'm here to support your mental wellness journey.<br><br>` +
                 `I'll check in with you, listen to how you're feeling, and suggest activities that might help.<br><br>` +
@@ -2297,9 +2386,10 @@
             document.getElementById('onboardingOverlay').classList.add('hidden');
             
             // Update main app with pet selection
-            const petEmoji = localStorage.getItem('mindmate_pet_emoji') || '🐶';
-            AppState.chat.companion.emoji = petEmoji;
-            document.getElementById('companionAvatar').textContent = petEmoji;
+            const petImage = localStorage.getItem('mindmate_pet_image') || 'Gentle Guardian.jpeg';
+            AppState.chat.companion.image = petImage;
+            const avatarEl = document.getElementById('companionAvatar');
+            avatarEl.src = petImage;
         }
         
         function showOnboardingScreen(screenId) {
@@ -2348,38 +2438,173 @@
             return true;
         }
 
+        // ===== REFRESH WELLNESS DATA =====
+        async function refreshWellnessData() {
+            console.log('🔄 Manual refresh triggered...');
+            await loadWellnessData();
+        }
+
         // ===== LOAD REAL WELLNESS DATA =====
         async function loadWellnessData() {
             try {
                 console.log('📊 Loading real wellness data from ML API...');
                 const riskData = await APIClient.calculateRisk(USER_ID);
                 
-                // Update AppState with REAL data
-                AppState.wellness.score = 10 - (riskData.riskScore * 10);
+                // Update AppState with REAL data (0-100 scale)
+                AppState.wellness.score = 100 - (riskData.riskScore * 100);
                 AppState.wellness.riskScore = riskData.riskScore;
                 AppState.wellness.riskLevel = riskData.riskLevel.toUpperCase();
                 AppState.wellness.confidence = Math.round(riskData.confidence || 85);
-                AppState.wellness.featuresAnalyzed = Object.keys(riskData.features || {}).length || 0;
+                AppState.wellness.featuresAnalyzed = Object.keys(riskData.features || {}).length || 49;
+                AppState.wellness.riskFactors = riskData.riskFactors || [];
                 AppState.wellness.lastUpdated = new Date();
                 
                 // Update UI with real data
                 wellnessHero.animateScore(AppState.wellness.score);
-                wellnessHero.updateProgressBar(AppState.wellness.score / 10);
+                wellnessHero.updateProgressBar(AppState.wellness.score / 100);
                 wellnessHero.updateMetrics({
                     score: AppState.wellness.score,
                     riskLevel: AppState.wellness.riskLevel,
-                    confidence: AppState.wellness.confidence
+                    confidence: AppState.wellness.confidence,
+                    featuresAnalyzed: AppState.wellness.featuresAnalyzed
                 });
+                
+                // Update AI Report if visible
+                if (document.getElementById('reportContent').classList.contains('active')) {
+                    updateAIReport();
+                }
                 
                 console.log('✅ Wellness data loaded:', AppState.wellness);
             } catch (error) {
                 console.error('❌ Failed to load wellness data:', error);
                 // Show placeholder message
-                document.getElementById('wellnessScore').textContent = '--';
+                document.getElementById('wellnessScore').textContent = '0';
                 document.getElementById('riskLevel').textContent = 'N/A';
                 document.getElementById('mlConfidence').textContent = '--';
-                document.getElementById('featuresCount').textContent = '--';
+                document.getElementById('featuresAnalyzed').textContent = '--';
             }
+        }
+        
+        // ===== UPDATE AI REPORT =====
+        function updateAIReport() {
+            const reportView = document.getElementById('reportView');
+            if (!reportView) return;
+            
+            const riskLevel = AppState.wellness.riskLevel;
+            const riskScore = AppState.wellness.riskScore;
+            const riskFactors = AppState.wellness.riskFactors || [];
+            const featuresAnalyzed = AppState.wellness.featuresAnalyzed;
+            
+            // Determine risk color and message
+            let riskColor, riskIcon, riskMessage;
+            if (riskScore >= 0.8) {
+                riskColor = '#f87171';
+                riskIcon = '🚨';
+                riskMessage = 'Critical - Immediate support recommended';
+            } else if (riskScore >= 0.6) {
+                riskColor = '#fbbf24';
+                riskIcon = '⚠️';
+                riskMessage = 'High - Please reach out for support';
+            } else if (riskScore >= 0.4) {
+                riskColor = '#60a5fa';
+                riskIcon = '💙';
+                riskMessage = 'Moderate - Consider self-care activities';
+            } else if (riskScore >= 0.2) {
+                riskColor = '#86efac';
+                riskIcon = '✅';
+                riskMessage = 'Low - Keep up the good work';
+            } else {
+                riskColor = '#4ade80';
+                riskIcon = '🌟';
+                riskMessage = 'Excellent - You\'re doing great!';
+            }
+            
+            reportView.innerHTML = `
+                <div style="padding: 20px;">
+                    <h2 style="margin-bottom: 20px; color: var(--text);">🧠 AI Wellness Report</h2>
+                    
+                    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="font-size: 48px; text-align: center; margin-bottom: 10px;">${riskIcon}</div>
+                        <div style="font-size: 24px; font-weight: bold; text-align: center; color: ${riskColor}; margin-bottom: 10px;">
+                            ${riskLevel}
+                        </div>
+                        <div style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
+                            ${riskMessage}
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: center;">
+                            <div>
+                                <div style="font-size: 32px; font-weight: bold; color: var(--primary-dark);">
+                                    ${AppState.wellness.score.toFixed(0)}
+                                </div>
+                                <div style="color: var(--text-light); font-size: 14px;">
+                                    Wellness Score
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 32px; font-weight: bold; color: ${riskColor};">
+                                    ${(riskScore * 100).toFixed(0)}%
+                                </div>
+                                <div style="color: var(--text-light); font-size: 14px;">
+                                    Risk Score
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 15px; color: var(--text);">📊 Analysis Details</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <div style="font-size: 24px; font-weight: bold; color: var(--primary-dark);">${featuresAnalyzed}</div>
+                                <div style="color: var(--text-light); font-size: 14px;">Features Analyzed</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 24px; font-weight: bold; color: var(--primary-dark);">${AppState.wellness.confidence}%</div>
+                                <div style="color: var(--text-light); font-size: 14px;">ML Confidence</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${riskFactors.length > 0 ? `
+                        <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h3 style="margin-bottom: 15px; color: var(--text);">⚠️ Risk Factors Detected</h3>
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                ${riskFactors.map(factor => `
+                                    <li style="padding: 10px; margin-bottom: 8px; background: var(--bg); border-radius: 8px; color: var(--text);">
+                                        • ${factor}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 15px; color: var(--text);">💡 Recommendations</h3>
+                        <div style="color: var(--text); line-height: 1.6;">
+                            ${riskScore >= 0.6 ? `
+                                <p style="margin-bottom: 10px;">🆘 <strong>Crisis Resources:</strong></p>
+                                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                                    <li>Call 988 (Suicide & Crisis Lifeline)</li>
+                                    <li>Text HOME to 741741 (Crisis Text Line)</li>
+                                    <li>Call 911 if in immediate danger</li>
+                                </ul>
+                            ` : ''}
+                            <p style="margin-bottom: 10px;">💙 <strong>Self-Care Tips:</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li>Talk to someone you trust</li>
+                                <li>Practice deep breathing or meditation</li>
+                                <li>Get some physical activity</li>
+                                <li>Maintain a regular sleep schedule</li>
+                                <li>Reach out to your support network</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px; color: var(--text-light); font-size: 12px;">
+                        Last updated: ${new Date().toLocaleString()}
+                    </div>
+                </div>
+            `;
         }
 
         // ===== INITIALIZATION =====

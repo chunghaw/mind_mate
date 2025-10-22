@@ -49,11 +49,8 @@ def get_recent_chat_messages(user_id, days=7):
         
         messages = []
         for item in response.get('Items', []):
-            # Handle both old format (sender/message) and new format (userMessage)
             if item.get('sender') == 'user' and item.get('message'):
                 messages.append(item['message'])
-            elif item.get('userMessage'):  # New format from agent chat
-                messages.append(item['userMessage'])
         
         return messages
     except Exception as e:

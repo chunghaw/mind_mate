@@ -94,6 +94,7 @@ REMEMBER: No asterisks or stage directions - just speak directly to the user."""
         # Store conversation in DynamoDB
         timestamp = datetime.utcnow().isoformat() + 'Z'
         try:
+            from decimal import Decimal
             table.put_item(Item={
                 'PK': f'USER#{user_id}',
                 'SK': f'CHAT#{timestamp}',
@@ -101,7 +102,7 @@ REMEMBER: No asterisks or stage directions - just speak directly to the user."""
                 'userId': user_id,
                 'userMessage': message,
                 'aiResponse': ai_response,
-                'wellnessScore': wellness_score,
+                'wellnessScore': Decimal(str(wellness_score)),
                 'riskLevel': risk_level,
                 'timestamp': timestamp,
                 'ts': timestamp
