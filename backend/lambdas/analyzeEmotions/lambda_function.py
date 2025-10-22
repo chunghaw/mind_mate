@@ -9,19 +9,21 @@ def lambda_handler(event, context):
     """
     Use Bedrock to analyze emotions and mental health indicators in user messages
     """
+    # CRITICAL: Handle OPTIONS first before any other processing
+    request_method = event.get('httpMethod') or event.get('requestContext', {}).get('http', {}).get('method')
+    if request_method == 'OPTIONS' or not event.get('body'):
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
+            'body': json.dumps({})
+        }
+    
     try:
-        # Handle CORS preflight request
-        if event.get('httpMethod') == 'OPTIONS':
-            return {
-                'statusCode': 200,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,POST'
-                },
-                'body': json.dumps({})
-            }
         
         # Parse request
         body = json.loads(event.get('body', '{}')) if isinstance(event.get('body'), str) else event
