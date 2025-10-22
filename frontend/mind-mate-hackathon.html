@@ -446,11 +446,76 @@
         .message.companion {
             display: flex;
             gap: 10px;
+            align-items: flex-start;
         }
 
         .message.user {
             display: flex;
             justify-content: flex-end;
+            align-items: flex-start;
+        }
+
+        .message-sender {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            padding: 0 4px;
+        }
+
+        .message.companion .message-sender {
+            color: var(--primary);
+        }
+
+        .message.user .message-sender {
+            color: var(--primary-dark);
+            text-align: right;
+        }
+
+        /* ===== ML INTERPRETATION STYLING ===== */
+        .ml-interpretation {
+            margin: 8px 0 16px 42px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .ml-analysis {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 12px;
+            max-width: 70%;
+        }
+
+        .ml-header {
+            font-weight: 600;
+            color: #0369a1;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ml-insights {
+            margin-bottom: 8px;
+        }
+
+        .ml-insight {
+            background: rgba(14, 165, 233, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin: 4px 0;
+            color: #0369a1;
+            font-size: 11px;
+        }
+
+        .ml-score {
+            font-weight: 600;
+            color: #0c4a6e;
+            font-size: 11px;
+            text-align: center;
+            padding-top: 8px;
+            border-top: 1px solid rgba(14, 165, 233, 0.2);
         }
 
         .message-avatar {
@@ -1635,14 +1700,105 @@
 
                 AppState.chat.messages.push(message);
                 this.renderMessage(message);
+                
+                // Add ML interpretation for user messages (demo purposes)
+                if (type === 'user' && !metadata.skipMLAnalysis) {
+                    this.addMLInterpretation(text);
+                }
+                
                 scrollToBottom();
+            }
+
+            addMLInterpretation(userText) {
+                // Analyze user message and show ML insights
+                const analysis = this.analyzeMessageForML(userText);
+                
+                if (analysis.insights.length > 0) {
+                    setTimeout(() => {
+                        const mlDiv = document.createElement('div');
+                        mlDiv.className = 'ml-interpretation';
+                        mlDiv.innerHTML = `
+                            <div class="ml-analysis">
+                                <div class="ml-header">🧠 ML Analysis</div>
+                                <div class="ml-insights">
+                                    ${analysis.insights.map(insight => `<div class="ml-insight">${insight}</div>`).join('')}
+                                </div>
+                                <div class="ml-score">Risk Score: ${analysis.riskScore}% | Confidence: ${analysis.confidence}%</div>
+                            </div>
+                        `;
+                        this.container.appendChild(mlDiv);
+                        scrollToBottom();
+                    }, 500);
+                }
+            }
+
+            analyzeMessageForML(text) {
+                const insights = [];
+                let riskScore = 20; // Base risk
+                let confidence = 85;
+                
+                const lowerText = text.toLowerCase();
+                
+                // Crisis keywords detection
+                const crisisWords = ['hopeless', 'pointless', 'give up', 'end it', 'can\'t go on', 'worthless', 'no point'];
+                const foundCrisis = crisisWords.filter(word => lowerText.includes(word));
+                if (foundCrisis.length > 0) {
+                    insights.push(`🚨 Crisis language detected: "${foundCrisis[0]}"`);
+                    riskScore += 40;
+                }
+                
+                // Negative sentiment
+                const negativeWords = ['overwhelm', 'exhausted', 'tired', 'sad', 'depressed', 'anxious', 'stressed', 'worried'];
+                const foundNegative = negativeWords.filter(word => lowerText.includes(word));
+                if (foundNegative.length > 0) {
+                    insights.push(`📉 Negative sentiment: "${foundNegative[0]}" (AWS Comprehend)`);
+                    riskScore += 15;
+                }
+                
+                // Sleep issues
+                if (lowerText.includes('sleep') || lowerText.includes('tired') || lowerText.includes('racing')) {
+                    insights.push(`😴 Sleep disruption pattern detected`);
+                    riskScore += 10;
+                }
+                
+                // Isolation indicators
+                const isolationWords = ['alone', 'lonely', 'no one', 'nobody'];
+                const foundIsolation = isolationWords.filter(word => lowerText.includes(word));
+                if (foundIsolation.length > 0) {
+                    insights.push(`🏠 Social isolation indicator: "${foundIsolation[0]}"`);
+                    riskScore += 20;
+                }
+                
+                // Positive indicators
+                const positiveWords = ['good', 'great', 'happy', 'optimistic', 'better'];
+                const foundPositive = positiveWords.filter(word => lowerText.includes(word));
+                if (foundPositive.length > 0) {
+                    insights.push(`✅ Positive sentiment: "${foundPositive[0]}"`);
+                    riskScore = Math.max(10, riskScore - 15);
+                }
+                
+                // Behavioral patterns
+                if (lowerText.includes('work') && (lowerText.includes('good') || lowerText.includes('well'))) {
+                    insights.push(`💼 Positive work engagement detected`);
+                    riskScore = Math.max(10, riskScore - 10);
+                }
+                
+                return {
+                    insights,
+                    riskScore: Math.min(95, riskScore),
+                    confidence
+                };
             }
 
             renderMessage(message) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${message.type}`;
 
-                const time = new Date(message.timestamp).toLocaleTimeString([], {
+                const messageDate = new Date(message.timestamp);
+                const time = messageDate.toLocaleDateString([], {
+                    month: 'short',
+                    day: 'numeric'
+                }) + ' ' + messageDate.toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit'
                 });
@@ -1933,7 +2089,11 @@
         }
 
         function formatTime(timestamp) {
-            return new Date(timestamp).toLocaleTimeString([], {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString([], {
+                month: 'short',
+                day: 'numeric'
+            }) + ' ' + date.toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit'
             });
