@@ -3056,54 +3056,47 @@
                 
                 // Convert to base64
                 const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                const base64Data = imageData.split(',')[1]; // Remove data:image/jpeg;base64, prefix
                 
-                status.textContent = 'Analyzing your emotions...';
+                status.textContent = 'Sending selfie to AI...';
                 
-                // Send to selfie analysis API
-                const response = await fetch(`${API_BASE}/analyze-selfie`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: USER_ID,
-                        imageBase64: imageData
-                    })
-                });
+                // Close camera first
+                closeCamera();
                 
-                const result = await response.json();
+                // Create image object for chat
+                const imageForChat = {
+                    data: base64Data,
+                    type: 'image/jpeg',
+                    name: 'selfie.jpg'
+                };
                 
-                if (result.ok) {
-                    // Close camera
-                    closeCamera();
+                // Show typing indicator
+                AppState.chat.isTyping = true;
+                chatInterface.showTyping();
+                
+                // Send to chat with Bedrock analysis
+                try {
+                    const aiResponse = await sendChatMessage('Here\'s how I\'m feeling right now', imageForChat);
+                    chatInterface.hideTyping();
                     
-                    // Add selfie analysis to chat
-                    const emotions = result.emotions || [];
-                    const topEmotion = emotions[0];
-                    const aiResponse = result.response;
-                    
-                    if (topEmotion) {
-                        chatInterface.addMessage('user', '📷 *Shared a selfie*');
-                        
-                        setTimeout(() => {
-                            const emotionText = `I can see you're feeling ${topEmotion.Type.toLowerCase()} (${Math.round(topEmotion.Confidence)}% confidence). ${aiResponse.message}`;
-                            chatInterface.addMessage('companion', emotionText);
-                            
-                            // Add activity suggestions if available
-                            if (aiResponse.activities && aiResponse.activities.length > 0) {
-                                setTimeout(() => {
-                                    const activities = aiResponse.activities.map(a => `• ${a.activity} (${a.duration})`).join('\n');
-                                    chatInterface.addMessage('companion', `Here are some activities that might help:\n${activities}`);
-                                }, 1000);
-                            }
-                        }, 500);
-                    } else {
-                        chatInterface.addMessage('companion', 'I received your selfie! ' + (aiResponse.message || 'Thanks for sharing how you\'re feeling.'));
+                    // Add messages to chat
+                    chatInterface.addMessage('user', '📷 Selfie - Here\'s how I\'m feeling right now');
+                    if (aiResponse) {
+                        chatInterface.addMessage('companion', aiResponse);
                     }
-                } else {
-                    status.textContent = 'Error analyzing selfie. Please try again.';
+                    AppState.chat.isTyping = false;
+                    
+                } catch (error) {
+                    console.error('Chat error:', error);
+                    chatInterface.hideTyping();
+                    chatInterface.addMessage('user', '📷 Selfie');
+                    chatInterface.addMessage('companion', 'I can see your selfie! Thanks for sharing how you\'re feeling with me.');
+                    AppState.chat.isTyping = false;
                 }
+                
             } catch (error) {
                 console.error('Capture error:', error);
-                document.getElementById('cameraStatus').textContent = 'Error processing selfie. Please try again.';
+                document.getElementById('cameraStatus').textContent = 'Error taking selfie. Please try again.';
             }
         }
 
