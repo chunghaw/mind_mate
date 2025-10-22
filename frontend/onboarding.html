@@ -459,7 +459,7 @@
         <!-- Step 4: Pet Asks for User's Name -->
         <div id="nameScreen" class="screen">
             <div class="conversation-card">
-                <img src="Gentle Guardian.jpeg" alt="Pet Avatar" class="pet-avatar-large" id="petAvatar">
+                <img src="Playful Pal.jpeg" alt="Pet Avatar" class="pet-avatar-large" id="petAvatar">
                 <div class="pet-message" id="nameGreeting">
                     Hi there! I'm so excited to be your companion!<br>
                     What should I call you?
@@ -472,7 +472,7 @@
         <!-- Step 5: Pet Introduces Itself -->
         <div id="introScreen" class="screen">
             <div class="conversation-card">
-                <img src="Gentle Guardian.jpeg" alt="Pet Avatar" class="pet-avatar-large" id="introPetAvatar">
+                <img src="Playful Pal.jpeg" alt="Pet Avatar" class="pet-avatar-large" id="introPetAvatar">
                 <div class="pet-message" id="introGreeting">Nice to meet you!</div>
                 <p class="intro-text" id="introText">
                     You can call me Buddy. I'm here to support your mental wellness journey.<br><br>
@@ -788,13 +788,88 @@
             } catch (error) {
                 console.error('Error saving name:', error);
                 // Continue anyway for demo
-                localStorage.setItem('mindmate_userName', userName);
                 const personality = localStorage.getItem('mindmate_personality');
+                localStorage.setItem('mindmate_userName', userName);
                 const details = personalityDetails[personality];
                 document.getElementById('introPetAvatar').src = details.image;
                 document.getElementById('introGreeting').textContent = details.intro.replace('{name}', userName).split('.')[0] + '!';
+                document.getElementById('introText').innerHTML = details.intro.replace('{name}', userName).split('.').slice(1).join('.') + 
+                    '<br><br>I\'ll check in with you, listen to how you\'re feeling, and suggest activities that might help.<br><br>Ready to start?';
                 showScreen('introScreen');
             }
+        }
+
+        // Complete Onboarding
+        async function completeOnboarding() {
+            try {
+                const token = localStorage.getItem('mindmate_token');
+                
+                // Mark onboarding complete
+                await fetch(`${API_BASE}/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ onboardingComplete: true })
+                });
+                
+                localStorage.setItem('mindmate_onboardingComplete', 'true');
+                
+                // Redirect to main app
+                window.location.href = '/mind-mate-hackathon.html';
+            } catch (error) {
+                console.error('Error completing onboarding:', error);
+                // Still redirect even if API fails
+                localStorage.setItem('mindmate_onboardingComplete', 'true');
+                window.location.href = '/mind-mate-hackathon.html';
+            }
+        }
+
+        // Username/Password Login (for returning users)
+        function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showError('loginError', 'Please fill in all fields');
+                return;
+            }
+            
+            const authData = { Username: username, Password: password };
+            const authDetails = new AmazonCognitoIdentity.AuthenticationDetails(authData);
+            const userData = { Username: username, Pool: userPool };
+            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+            
+            cognitoUser.authenticateUser(authDetails, {
+                onSuccess: async (result) => {
+                    const token = result.getIdToken().getJwtToken();
+                    const userId = result.getIdToken().payload.sub;
+                    
+                    localStorage.setItem('mindmate_token', token);
+                    localStorage.setItem('mindmate_userId', userId);
+                    localStorage.setItem('mindmate_username', username);
+                    
+                    // Check if onboarding is complete
+                    try {
+                        const response = await fetch(`${API_BASE}/profile`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await response.json();
+                        
+                        if (data.profile && data.profile.onboardingComplete) {
+                            window.location.href = '/mind-mate-hackathon.html';
+                        } else {
+                            showScreen('personalityScreen');
+                        }
+                    } catch (error) {
+                        showScreen('personalityScreen');
+                    }
+                },
+                onFailure: (err) => {
+                    showError('loginError', err.message || 'Invalid username or password');
+                }
+            });
         }
 
         // Complete Onboarding
