@@ -43,21 +43,33 @@ def get_user_messages(user_id, days=30):
         
         # Query chat messages (user messages only, not AI responses)
         chat_response = table.query(
-            KeyConditionExpression='PK = :pk AND SK BETWEEN :start AND :end',
+            KeyConditionExpression='PK = :pk AND begins_with(SK, :chat_prefix)',
             ExpressionAttributeValues={
                 ':pk': f'USER#{user_id}',
-                ':start': f'CHAT#{start_date.isoformat()}',
-                ':end': f'CHAT#{end_date.isoformat()}Z'
+                ':chat_prefix': 'CHAT#'
             }
         )
         
         for item in chat_response.get('Items', []):
             if item.get('type') == 'CHAT' and item.get('userMessage'):
-                messages.append({
-                    'text': item.get('userMessage', ''),
-                    'timestamp': item.get('ts'),
-                    'mood': decimal_to_float(item.get('wellnessScore', 5))  # Use wellness score as mood proxy
-                })
+                # Filter by date after retrieval
+                item_timestamp = item.get('timestamp', item.get('ts', ''))
+                try:
+                    item_date = datetime.fromisoformat(item_timestamp.replace('Z', '+00:00'))
+                    if item_date >= start_date:
+                        messages.append({
+                            'text': item.get('userMessage', ''),
+                            'timestamp': item_timestamp,
+                            'mood': decimal_to_float(item.get('wellnessScore', 5))  # Use wellness score as mood proxy
+                        })
+                except Exception as e:
+                    print(f"Error parsing timestamp {item_timestamp}: {e}")
+                    # Include anyway if timestamp parsing fails
+                    messages.append({
+                        'text': item.get('userMessage', ''),
+                        'timestamp': item_timestamp,
+                        'mood': 5
+                    })
         
         # Sort by timestamp
         messages.sort(key=lambda x: x['timestamp'])

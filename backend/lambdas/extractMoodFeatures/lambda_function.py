@@ -22,23 +22,36 @@ def get_user_moods(user_id, days=30):
         
         # Query mood entries
         response = table.query(
-            KeyConditionExpression='PK = :pk AND SK BETWEEN :start AND :end',
+            KeyConditionExpression='PK = :pk AND begins_with(SK, :mood_prefix)',
             ExpressionAttributeValues={
                 ':pk': f'USER#{user_id}',
-                ':start': f'MOOD#{start_date.isoformat()}',
-                ':end': f'MOOD#{end_date.isoformat()}Z'
+                ':mood_prefix': 'MOOD#'
             }
         )
         
         moods = []
         for item in response.get('Items', []):
             if item.get('type') == 'MOOD':
-                moods.append({
-                    'mood': decimal_to_float(item.get('mood', 5)),
-                    'timestamp': item.get('ts'),
-                    'tags': item.get('tags', []),
-                    'notes': item.get('notes', '')
-                })
+                # Filter by date after retrieval
+                item_timestamp = item.get('timestamp', item.get('ts', ''))
+                try:
+                    item_date = datetime.fromisoformat(item_timestamp.replace('Z', '+00:00'))
+                    if item_date >= start_date:
+                        moods.append({
+                            'mood': decimal_to_float(item.get('mood', 5)),
+                            'timestamp': item_timestamp,
+                            'tags': item.get('tags', []),
+                            'notes': item.get('notes', '')
+                        })
+                except Exception as e:
+                    print(f"Error parsing mood timestamp {item_timestamp}: {e}")
+                    # Include anyway if timestamp parsing fails
+                    moods.append({
+                        'mood': decimal_to_float(item.get('mood', 5)),
+                        'timestamp': item_timestamp,
+                        'tags': item.get('tags', []),
+                        'notes': item.get('notes', '')
+                    })
         
         # Sort by timestamp
         moods.sort(key=lambda x: x['timestamp'])

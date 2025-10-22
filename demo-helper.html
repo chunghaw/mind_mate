@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Mate ML Demo Helper</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f9f4;
+        }
+        .demo-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .demo-title {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .demo-step {
+            background: #f8fafc;
+            border-left: 4px solid #86efac;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .button {
+            background: #86efac;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #4ade80;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .ml-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .feature-card {
+            background: #f0f9f4;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #d1fae5;
+        }
+        .feature-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+        .feature-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #059669;
+        }
+        .feature-desc {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧠 Mind Mate ML Demo Helper</h1>
+    <p>Use this helper during your demo to showcase the ML features effectively.</p>
+
+    <div class="demo-section">
+        <div class="demo-title">🎬 Demo Flow Control</div>
+        
+        <div class="demo-step">
+            <strong>Step 1: Setup Demo Data</strong>
+            <p>Create realistic user journey with declining mental health pattern</p>
+            <button class="button" onclick="setupDemoData()">Setup Demo Data</button>
+            <div id="setupStatus"></div>
+        </div>
+
+        <div class="demo-step">
+            <strong>Step 2: Trigger ML Analysis</strong>
+            <p>Run the ML feature extraction and risk calculation</p>
+            <button class="button" onclick="triggerMLAnalysis()">Run ML Analysis</button>
+            <div id="analysisStatus"></div>
+        </div>
+
+        <div class="demo-step">
+            <strong>Step 3: Show ML Features</strong>
+            <p>Display the extracted ML features in real-time</p>
+            <button class="button" onclick="showMLFeatures()">Show ML Features</button>
+            <div id="featuresDisplay"></div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <div class="demo-title">🎯 Key Demo Points</div>
+        
+        <div class="demo-step">
+            <strong>Opening Hook:</strong>
+            <p>"Most mental health apps just count sad words. Mind Mate uses <span class="highlight">real machine learning</span> to understand your mental health patterns."</p>
+        </div>
+
+        <div class="demo-step">
+            <strong>Technical Credibility:</strong>
+            <p>"We're using <span class="highlight">AWS Comprehend</span> for sentiment analysis, <span class="highlight">SageMaker</span> for model training, and <span class="highlight">ensemble ML models</span>."</p>
+        </div>
+
+        <div class="demo-step">
+            <strong>Show the Difference:</strong>
+            <p>"Instead of counting keywords, we analyze <span class="highlight">47+ ML features</span> including mood trends, sentiment patterns, and behavioral changes."</p>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <div class="demo-title">📊 Live ML Features</div>
+        <div id="liveFeatures">
+            <p>Click "Show ML Features" above to display real-time analysis</p>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <div class="demo-title">🛠️ Demo URLs</div>
+        <div class="demo-step">
+            <strong>Main App:</strong> 
+            <a href="frontend/mind-mate-hackathon.html" target="_blank">mind-mate-hackathon.html</a>
+        </div>
+        <div class="demo-step">
+            <strong>Onboarding:</strong> 
+            <a href="frontend/index.html" target="_blank">index.html</a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com';
+        const DEMO_USER = 'demo-user-ml-showcase';
+
+        async function setupDemoData() {
+            const statusDiv = document.getElementById('setupStatus');
+            statusDiv.innerHTML = '<div class="status">Setting up demo data...</div>';
+
+            try {
+                // Create mood progression showing decline
+                const moodData = [
+                    { mood: 7, notes: "Excited to try this new mental health app! Feeling optimistic.", tags: ["excited", "optimistic"] },
+                    { mood: 6, notes: "Had a productive day at work. Buddy is helpful!", tags: ["productive", "work"] },
+                    { mood: 5, notes: "Work is getting more stressful. Deadlines approaching.", tags: ["stressed", "work"] },
+                    { mood: 4, notes: "Having trouble sleeping. Mind keeps racing about work problems.", tags: ["insomnia", "anxiety"] },
+                    { mood: 3, notes: "Everything feels overwhelming. I don't know how to handle this pressure.", tags: ["overwhelmed", "pressure"] },
+                    { mood: 2, notes: "I feel so hopeless and alone. Maybe I should just give up.", tags: ["hopeless", "alone"] },
+                    { mood: 1, notes: "I can't go on like this. What's the point? Nobody understands.", tags: ["crisis", "despair"] }
+                ];
+
+                for (let i = 0; i < moodData.length; i++) {
+                    const response = await fetch(`${API_BASE}/log-mood`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            userId: DEMO_USER,
+                            ...moodData[i]
+                        })
+                    });
+                }
+
+                statusDiv.innerHTML = '<div class="status success">✅ Demo data created successfully! 7 days of mood progression with declining pattern.</div>';
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function triggerMLAnalysis() {
+            const statusDiv = document.getElementById('analysisStatus');
+            statusDiv.innerHTML = '<div class="status">Running ML analysis...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/calculate-risk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: DEMO_USER })
+                });
+
+                const data = await response.json();
+                
+                if (data.ok) {
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ ML Analysis Complete!<br>
+                            Risk Score: ${(data.riskScore * 100).toFixed(1)}%<br>
+                            Risk Level: ${data.riskLevel}<br>
+                            Method: ${data.method}<br>
+                            Confidence: ${data.confidence}%
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Analysis failed');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function showMLFeatures() {
+            const featuresDiv = document.getElementById('featuresDisplay');
+            const liveDiv = document.getElementById('liveFeatures');
+            
+            featuresDiv.innerHTML = '<div class="status">Extracting ML features...</div>';
+
+            try {
+                // Get mood features
+                const moodResponse = await fetch(`${API_BASE}/extract-mood-features`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: DEMO_USER })
+                });
+                const moodData = await moodResponse.json();
+                const moodFeatures = JSON.parse(moodData.body);
+
+                // Get sentiment features
+                const sentimentResponse = await fetch(`${API_BASE}/extract-sentiment-features`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: DEMO_USER })
+                });
+                const sentimentData = await sentimentResponse.json();
+                const sentimentFeatures = JSON.parse(sentimentData.body);
+
+                // Display key features
+                const keyFeatures = [
+                    { title: 'Mood Trend (7-day)', value: moodFeatures.mood_trend_7day?.toFixed(3) || '0', desc: 'Negative = declining' },
+                    { title: 'Consecutive Low Days', value: moodFeatures.consecutive_low_days || '0', desc: 'Days with mood ≤ 3' },
+                    { title: 'Crisis Keywords', value: sentimentFeatures.crisis_keywords || '0', desc: 'Direct crisis language' },
+                    { title: 'Hopelessness Score', value: (sentimentFeatures.hopelessness_score || 0).toFixed(2), desc: '0-1 scale, higher = worse' },
+                    { title: 'Negative Sentiment %', value: ((sentimentFeatures.negative_sentiment_frequency || 0) * 100).toFixed(0) + '%', desc: 'AWS Comprehend analysis' },
+                    { title: 'Total Features', value: Object.keys({...moodFeatures, ...sentimentFeatures}).length, desc: 'ML features extracted' }
+                ];
+
+                const featuresHTML = `
+                    <div class="ml-features">
+                        ${keyFeatures.map(feature => `
+                            <div class="feature-card">
+                                <div class="feature-title">${feature.title}</div>
+                                <div class="feature-value">${feature.value}</div>
+                                <div class="feature-desc">${feature.desc}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                featuresDiv.innerHTML = '<div class="status success">✅ ML Features extracted successfully!</div>';
+                liveDiv.innerHTML = featuresHTML;
+
+            } catch (error) {
+                featuresDiv.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-refresh features every 30 seconds during demo
+        setInterval(() => {
+            if (document.getElementById('liveFeatures').innerHTML.includes('feature-card')) {
+                showMLFeatures();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -22,42 +22,94 @@ def get_user_interactions(user_id, days=30):
         
         # Query mood entries (primary interaction type)
         response = table.query(
-            KeyConditionExpression='PK = :pk AND SK BETWEEN :start AND :end',
+            KeyConditionExpression='PK = :pk AND begins_with(SK, :mood_prefix)',
             ExpressionAttributeValues={
                 ':pk': f'USER#{user_id}',
-                ':start': f'MOOD#{start_date.isoformat()}',
-                ':end': f'MOOD#{end_date.isoformat()}Z'
+                ':mood_prefix': 'MOOD#'
             }
         )
         
         interactions = []
         for item in response.get('Items', []):
             if item.get('type') == 'MOOD':
-                interactions.append({
-                    'type': 'mood_log',
-                    'timestamp': item.get('ts'),
-                    'mood': decimal_to_float(item.get('mood', 5)),
-                    'notes': item.get('notes', ''),
-                    'tags': item.get('tags', [])
-                })
+                item_timestamp = item.get('timestamp', item.get('ts', ''))
+                try:
+                    item_date = datetime.fromisoformat(item_timestamp.replace('Z', '+00:00'))
+                    if item_date >= start_date:
+                        interactions.append({
+                            'type': 'mood_log',
+                            'timestamp': item_timestamp,
+                            'mood': decimal_to_float(item.get('mood', 5)),
+                            'notes': item.get('notes', ''),
+                            'tags': item.get('tags', [])
+                        })
+                except Exception as e:
+                    print(f"Error parsing behavioral timestamp {item_timestamp}: {e}")
+                    interactions.append({
+                        'type': 'mood_log',
+                        'timestamp': item_timestamp,
+                        'mood': decimal_to_float(item.get('mood', 5)),
+                        'notes': item.get('notes', ''),
+                        'tags': item.get('tags', [])
+                    })
         
         # Query selfie entries
         selfie_response = table.query(
-            KeyConditionExpression='PK = :pk AND SK BETWEEN :start AND :end',
+            KeyConditionExpression='PK = :pk AND begins_with(SK, :selfie_prefix)',
             ExpressionAttributeValues={
                 ':pk': f'USER#{user_id}',
-                ':start': f'SELFIE#{start_date.isoformat()}',
-                ':end': f'SELFIE#{end_date.isoformat()}Z'
+                ':selfie_prefix': 'SELFIE#'
             }
         )
         
         for item in selfie_response.get('Items', []):
             if item.get('type') == 'SELFIE':
-                interactions.append({
-                    'type': 'selfie',
-                    'timestamp': item.get('ts'),
-                    'emotions': item.get('emotions', {})
-                })
+                item_timestamp = item.get('timestamp', item.get('ts', ''))
+                try:
+                    item_date = datetime.fromisoformat(item_timestamp.replace('Z', '+00:00'))
+                    if item_date >= start_date:
+                        interactions.append({
+                            'type': 'selfie',
+                            'timestamp': item_timestamp,
+                            'emotions': item.get('emotions', {})
+                        })
+                except Exception as e:
+                    print(f"Error parsing selfie timestamp {item_timestamp}: {e}")
+                    interactions.append({
+                        'type': 'selfie',
+                        'timestamp': item_timestamp,
+                        'emotions': item.get('emotions', {})
+                    })
+        
+        # Query chat messages for behavioral analysis
+        chat_response = table.query(
+            KeyConditionExpression='PK = :pk AND begins_with(SK, :chat_prefix)',
+            ExpressionAttributeValues={
+                ':pk': f'USER#{user_id}',
+                ':chat_prefix': 'CHAT#'
+            }
+        )
+        
+        for item in chat_response.get('Items', []):
+            if item.get('type') == 'CHAT' and item.get('userMessage'):
+                item_timestamp = item.get('timestamp', item.get('ts', ''))
+                try:
+                    item_date = datetime.fromisoformat(item_timestamp.replace('Z', '+00:00'))
+                    if item_date >= start_date:
+                        interactions.append({
+                            'type': 'chat_message',
+                            'timestamp': item_timestamp,
+                            'message': item.get('userMessage', ''),
+                            'length': len(item.get('userMessage', ''))
+                        })
+                except Exception as e:
+                    print(f"Error parsing chat timestamp {item_timestamp}: {e}")
+                    interactions.append({
+                        'type': 'chat_message',
+                        'timestamp': item_timestamp,
+                        'message': item.get('userMessage', ''),
+                        'length': len(item.get('userMessage', ''))
+                    })
         
         # Sort by timestamp
         interactions.sort(key=lambda x: x['timestamp'])
@@ -209,7 +261,7 @@ def calculate_usage_consistency(interactions):
         return 0.0
 
 def count_negative_words(interactions):
-    """Count negative words in notes"""
+    """Count negative words in notes and chat messages"""
     negative_words = [
         'sad', 'depressed', 'anxious', 'worried', 'stressed', 'overwhelmed',
         'hopeless', 'helpless', 'alone', 'lonely', 'tired', 'exhausted',
@@ -222,12 +274,16 @@ def count_negative_words(interactions):
         negative_count = 0
         
         for interaction in interactions:
+            text = ''
             if interaction.get('type') == 'mood_log':
-                notes = interaction.get('notes', '').lower()
-                if notes:
-                    words = notes.split()
-                    total_words += len(words)
-                    negative_count += sum(1 for word in words if word in negative_words)
+                text = interaction.get('notes', '').lower()
+            elif interaction.get('type') == 'chat_message':
+                text = interaction.get('message', '').lower()
+            
+            if text:
+                words = text.split()
+                total_words += len(words)
+                negative_count += sum(1 for word in words if word in negative_words)
         
         if total_words == 0:
             return 0.0
@@ -238,7 +294,7 @@ def count_negative_words(interactions):
         return 0.0
 
 def count_help_seeking(interactions):
-    """Count help-seeking phrases in notes"""
+    """Count help-seeking phrases in notes and chat messages"""
     help_phrases = [
         'help', 'need help', 'what should i do', 'i don\'t know',
         'advice', 'suggest', 'recommendation', 'what can i',
@@ -250,11 +306,16 @@ def count_help_seeking(interactions):
         total_interactions = 0
         
         for interaction in interactions:
+            text = ''
             if interaction.get('type') == 'mood_log':
+                text = interaction.get('notes', '').lower()
                 total_interactions += 1
-                notes = interaction.get('notes', '').lower()
-                if any(phrase in notes for phrase in help_phrases):
-                    help_count += 1
+            elif interaction.get('type') == 'chat_message':
+                text = interaction.get('message', '').lower()
+                total_interactions += 1
+            
+            if text and any(phrase in text for phrase in help_phrases):
+                help_count += 1
         
         if total_interactions == 0:
             return 0.0
@@ -291,10 +352,13 @@ def extract_behavioral_features(user_id, days=30):
     # Count interaction types
     mood_logs = [i for i in interactions if i['type'] == 'mood_log']
     selfies = [i for i in interactions if i['type'] == 'selfie']
+    chat_messages = [i for i in interactions if i['type'] == 'chat_message']
     
-    # Calculate message lengths
-    message_lengths = [len(i.get('notes', '')) for i in mood_logs if i.get('notes')]
-    avg_message_length = float(np.mean(message_lengths)) if message_lengths else 0.0
+    # Calculate message lengths (from both mood notes and chat messages)
+    mood_message_lengths = [len(i.get('notes', '')) for i in mood_logs if i.get('notes')]
+    chat_message_lengths = [i.get('length', 0) for i in chat_messages]
+    all_message_lengths = mood_message_lengths + chat_message_lengths
+    avg_message_length = float(np.mean(all_message_lengths)) if all_message_lengths else 0.0
     
     # Calculate activity completion (using mood logs with suggestions as proxy)
     logs_with_suggestions = [i for i in mood_logs if i.get('tags')]
@@ -324,7 +388,8 @@ def extract_behavioral_features(user_id, days=30):
         # Metadata
         'total_interactions': len(interactions),
         'mood_logs_count': len(mood_logs),
-        'selfies_count': len(selfies)
+        'selfies_count': len(selfies),
+        'chat_messages_count': len(chat_messages)
     }
     
     return features

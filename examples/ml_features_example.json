@@ -1,0 +1,124 @@
+{
+  "user_example_1": {
+    "scenario": "User with declining mental health over 2 weeks",
+    "raw_data": {
+      "mood_logs": [
+        {"date": "2024-01-01", "mood": 7, "notes": "Good day at work"},
+        {"date": "2024-01-02", "mood": 6, "notes": "Feeling okay"},
+        {"date": "2024-01-03", "mood": 5, "notes": "Bit stressed"},
+        {"date": "2024-01-04", "mood": 4, "notes": "Having trouble sleeping"},
+        {"date": "2024-01-05", "mood": 3, "notes": "Everything feels pointless"},
+        {"date": "2024-01-06", "mood": 2, "notes": "Can't stop crying"},
+        {"date": "2024-01-07", "mood": 2, "notes": "I don't know what to do"}
+      ],
+      "chat_messages": [
+        "I've been feeling really down lately",
+        "Nothing seems to matter anymore", 
+        "I feel so alone and hopeless",
+        "Maybe I should just give up"
+      ]
+    },
+    "extracted_ml_features": {
+      "mood_features": {
+        "mood_trend_7day": -0.83,
+        "mood_mean_7day": 4.14,
+        "mood_std_7day": 1.95,
+        "consecutive_low_days": 3,
+        "mood_volatility": 1.2,
+        "low_mood_frequency": 0.57,
+        "mood_decline_rate": 0.83
+      },
+      "sentiment_features": {
+        "negative_sentiment_frequency": 0.75,
+        "avg_negative_score": 0.82,
+        "hopelessness_score": 0.78,
+        "despair_keywords": 2,
+        "isolation_keywords": 1,
+        "sentiment_trend_7day": 0.15
+      },
+      "behavioral_features": {
+        "daily_checkin_frequency": 1.0,
+        "engagement_trend": -0.2,
+        "avg_message_length": 45.3,
+        "help_seeking_frequency": 0.25,
+        "negative_word_frequency": 0.18
+      }
+    },
+    "ml_prediction": {
+      "random_forest_probability": 0.84,
+      "gradient_boosting_probability": 0.79,
+      "ensemble_risk_score": 0.815,
+      "risk_level": "critical",
+      "confidence": 89,
+      "method": "ml_ensemble"
+    },
+    "interpretable_risk_factors": [
+      "Strong declining mood trend over past week (-0.83 slope)",
+      "Extended low mood period (3 consecutive days ≤ 3)",
+      "High negative sentiment in communications (75%)",
+      "Expressions of hopelessness detected (score: 0.78)",
+      "Multiple despair-related expressions (2 instances)",
+      "Declining engagement with app (-0.2 trend)"
+    ]
+  },
+  
+  "user_example_2": {
+    "scenario": "User having temporary stress but generally stable",
+    "raw_data": {
+      "mood_logs": [
+        {"date": "2024-01-01", "mood": 7, "notes": "Great weekend"},
+        {"date": "2024-01-02", "mood": 6, "notes": "Back to work"},
+        {"date": "2024-01-03", "mood": 6, "notes": "Busy day"},
+        {"date": "2024-01-04", "mood": 4, "notes": "Stressful presentation"},
+        {"date": "2024-01-05", "mood": 5, "notes": "Better today"},
+        {"date": "2024-01-06", "mood": 6, "notes": "Weekend plans"},
+        {"date": "2024-01-07", "mood": 7, "notes": "Feeling good"}
+      ],
+      "chat_messages": [
+        "Had a tough day with my presentation",
+        "Work has been really busy lately",
+        "Looking forward to the weekend",
+        "Feeling much better now"
+      ]
+    },
+    "extracted_ml_features": {
+      "mood_features": {
+        "mood_trend_7day": 0.0,
+        "mood_mean_7day": 5.86,
+        "mood_std_7day": 1.07,
+        "consecutive_low_days": 1,
+        "mood_volatility": 0.67,
+        "low_mood_frequency": 0.14,
+        "mood_decline_rate": 0.0
+      },
+      "sentiment_features": {
+        "negative_sentiment_frequency": 0.25,
+        "avg_negative_score": 0.31,
+        "hopelessness_score": 0.12,
+        "despair_keywords": 0,
+        "isolation_keywords": 0,
+        "sentiment_trend_7day": -0.05
+      },
+      "behavioral_features": {
+        "daily_checkin_frequency": 1.0,
+        "engagement_trend": 0.1,
+        "avg_message_length": 32.8,
+        "help_seeking_frequency": 0.0,
+        "negative_word_frequency": 0.08
+      }
+    },
+    "ml_prediction": {
+      "random_forest_probability": 0.18,
+      "gradient_boosting_probability": 0.22,
+      "ensemble_risk_score": 0.20,
+      "risk_level": "low",
+      "confidence": 78,
+      "method": "ml_ensemble"
+    },
+    "interpretable_risk_factors": [
+      "Temporary stress detected but overall stable mood pattern",
+      "No significant declining trends identified",
+      "Positive engagement with recovery activities"
+    ]
+  }
+}

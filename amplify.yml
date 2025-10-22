@@ -1,12 +1,25 @@
 version: 1
 frontend:
   phases:
+    preBuild:
+      commands:
+        - echo "Pre-build phase started"
+        - echo "Checking frontend files..."
+        - ls -la frontend/
     build:
       commands:
-        - echo "Build started"
+        - echo "Build phase started"
+        - echo "Mind Mate - AI Mental Health Companion"
+        - echo "Preparing frontend assets..."
+        - echo "✅ Frontend build complete"
+    postBuild:
+      commands:
+        - echo "Post-build phase"
+        - echo "Deployment ready!"
   artifacts:
     baseDirectory: frontend
     files:
       - '**/*'
+    name: mindmate-frontend
   cache:
     paths: []
