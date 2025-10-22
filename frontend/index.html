@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mind Mate - Your AI Companion</title>
     <link rel="icon" type="image/jpeg" href="Mind_Mate.jpeg">
-    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.7/dist/amazon-cognito-identity.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.7/dist/amazon-cognito-identity.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -39,8 +41,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Welcome Screen */
@@ -109,6 +118,18 @@
             transform: none;
         }
 
+        .btn-demo {
+            background: #f59e0b;
+            color: white;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-demo:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+        }
+
         /* Personality Selection */
         .personality-card {
             background: white;
@@ -169,11 +190,11 @@
             border: 3px solid #d1fae5;
             transition: all 0.3s;
         }
-        
+
         .personality-option:hover .personality-image {
             border-color: #86efac;
         }
-        
+
         .personality-option.selected .personality-image {
             border-color: #4ade80;
         }
@@ -228,8 +249,15 @@
         }
 
         @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
 
         .pet-message {
@@ -345,6 +373,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Step 1: Welcome Screen -->
@@ -355,591 +384,619 @@
                 </div>
                 <p class="tagline">Your AI Pet Companion for Mental Wellness</p>
                 <button class="btn btn-primary" onclick="signInWithGoogle()">🌟 Get Started with Google</button>
+                <button class="btn btn-demo" onclick="startTestUser()" style="background: #f59e0b; margin-top: 12px;">🧪 Enter as Test User</button>
                 <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
-                    Already have an account? <a href="#" class="link" onclick="showLogin(); return false;">Sign in with username</a>
+                    Already have an account? <a href="#" class="link" onclick="showLogin(); return false;">Sign in with
+                        username</a>
                 </p>
-            </div>
-        </div>
 
-        <!-- Auth: Login Screen (for returning users with username/password) -->
-        <div id="loginScreen" class="screen">
-            <div class="auth-card">
-                <img src="Mind_Mate.jpeg" alt="Mind Mate" class="auth-logo">
-                <h2 class="section-title">Welcome Back</h2>
-                <p class="section-subtitle">Sign in with your username</p>
-                
-                <div id="loginError" class="error" style="display: none;"></div>
-                
-                <div class="input-group">
-                    <label class="input-label">Username</label>
-                    <input type="text" id="loginUsername" placeholder="Your username">
-                </div>
-                
-                <div class="input-group">
-                    <label class="input-label">Password</label>
-                    <input type="password" id="loginPassword" placeholder="••••••••">
-                </div>
-                
-                <button class="btn btn-primary" onclick="login()">Sign In</button>
-                
-                <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
-                    <a href="#" class="link" onclick="showWelcome(); return false;">← Back to Google Sign-In</a>
-                </p>
-            </div>
-        </div>
+                <!-- Auth: Login Screen (for returning users with username/password) -->
+                <div id="loginScreen" class="screen">
+                    <div class="auth-card">
+                        <img src="Mind_Mate.jpeg" alt="Mind Mate" class="auth-logo">
+                        <h2 class="section-title">Welcome Back</h2>
+                        <p class="section-subtitle">Sign in with your username</p>
 
-        <!-- Set Username & Password (after Google sign-in) -->
-        <div id="setPasswordScreen" class="screen">
-            <div class="auth-card">
-                <img src="Mind_Mate.jpeg" alt="Mind Mate" class="auth-logo">
-                <h2 class="section-title">Set Up Direct Login</h2>
-                <p class="section-subtitle">Create a username and password for quick access next time</p>
-                
-                <div id="setPasswordError" class="error" style="display: none;"></div>
-                
-                <div class="input-group">
-                    <label class="input-label">Create Login Username</label>
-                    <input type="text" id="newUsername" placeholder="Username">
-                </div>
-                
-                <div class="input-group">
-                    <label class="input-label">Create Password</label>
-                    <input type="password" id="newPassword" placeholder="At least 8 characters">
-                    <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
-                        Must include: uppercase, lowercase, and number
-                    </small>
-                </div>
-                
-                <button class="btn btn-primary" onclick="setPassword()">Continue</button>
-                
-                <p style="margin-top: 16px; font-size: 13px; color: #64748b;">
-                    You can use this username and password to sign in directly next time, without Google.
-                </p>
-            </div>
-        </div>
+                        <div id="loginError" class="error" style="display: none;"></div>
 
-        <!-- Step 2: Personality Selection -->
-        <div id="personalityScreen" class="screen">
-            <div class="personality-card">
-                <h2 class="section-title">Choose Your Companion</h2>
-                <p class="section-subtitle">Each personality has a unique way of supporting you!</p>
-                
-                <div class="personality-grid">
-                    <div class="personality-option" data-personality="gentle" onclick="selectPersonality('gentle')">
-                        <img src="Gentle Guardian.jpeg" alt="Gentle Guardian" class="personality-image">
-                        <div class="personality-name">Gentle Guardian</div>
-                        <div class="personality-desc">Nurturing, supportive, patient</div>
-                    </div>
-                    
-                    <div class="personality-option" data-personality="playful" onclick="selectPersonality('playful')">
-                        <img src="Playful Pal.jpeg" alt="Playful Pal" class="personality-image">
-                        <div class="personality-name">Playful Pal</div>
-                        <div class="personality-desc">Energetic, fun, motivating</div>
-                    </div>
-                    
-                    <div class="personality-option" data-personality="focused" onclick="selectPersonality('focused')">
-                        <img src="Focused Friend.jpeg" alt="Focused Friend" class="personality-image">
-                        <div class="personality-name">Focused Friend</div>
-                        <div class="personality-desc">Calm, direct, mindful</div>
-                    </div>
-                    
-                    <div class="personality-option" data-personality="sensitive" onclick="selectPersonality('sensitive')">
-                        <img src="Sensitive Soul.png" alt="Sensitive Soul" class="personality-image">
-                        <div class="personality-name">Sensitive Soul</div>
-                        <div class="personality-desc">Empathetic, understanding, validating</div>
+                        <div class="input-group">
+                            <label class="input-label">Username</label>
+                            <input type="text" id="loginUsername" placeholder="Your username">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Password</label>
+                            <input type="password" id="loginPassword" placeholder="••••••••">
+                        </div>
+
+                        <button class="btn btn-primary" onclick="login()">Sign In</button>
+
+                        <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
+                            <a href="#" class="link" onclick="showWelcome(); return false;">← Back to Google Sign-In</a>
+                        </p>
                     </div>
                 </div>
-                
-                <div id="personalityDetail" class="personality-detail" style="display: none;"></div>
-                
-                <button class="btn btn-primary" id="continuePersonality" onclick="confirmPersonality()" disabled>Continue</button>
-            </div>
-        </div>
 
-        <!-- Step 4: Pet Asks for User's Name -->
-        <div id="nameScreen" class="screen">
-            <div class="conversation-card">
-                <div class="pet-avatar-large" id="petAvatar">🐶</div>
-                <div class="pet-message" id="nameGreeting">
-                    Hi there! I'm so excited to be your companion!<br>
-                    What should I call you?
+                <!-- Set Username & Password (after Google sign-in) -->
+                <div id="setPasswordScreen" class="screen">
+                    <div class="auth-card">
+                        <img src="Mind_Mate.jpeg" alt="Mind Mate" class="auth-logo">
+                        <h2 class="section-title">Set Up Direct Login</h2>
+                        <p class="section-subtitle">Create a username and password for quick access next time</p>
+
+                        <div id="setPasswordError" class="error" style="display: none;"></div>
+
+                        <div class="input-group">
+                            <label class="input-label">Create Login Username</label>
+                            <input type="text" id="newUsername" placeholder="Username">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Create Password</label>
+                            <input type="password" id="newPassword" placeholder="At least 8 characters">
+                            <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">
+                                Must include: uppercase, lowercase, and number
+                            </small>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="setPassword()">Continue</button>
+
+                        <p style="margin-top: 16px; font-size: 13px; color: #64748b;">
+                            You can use this username and password to sign in directly next time, without Google.
+                        </p>
+                    </div>
                 </div>
-                <input type="text" id="userName" class="user-input" placeholder="Your name...">
-                <button class="btn btn-primary" onclick="saveName()">Continue</button>
-            </div>
-        </div>
 
-        <!-- Step 5: User Names the Pet -->
-        <div id="petNameScreen" class="screen">
-            <div class="conversation-card">
-                <div class="pet-avatar-large" id="petNameAvatar">🐶</div>
-                <div class="pet-message" id="petNameGreeting">
-                    Nice to meet you, <span id="userNameDisplay"></span>!<br>
-                    What would you like to call me?
+                <!-- Step 2: Personality Selection -->
+                <div id="personalityScreen" class="screen">
+                    <div class="personality-card">
+                        <h2 class="section-title">Choose Your Companion</h2>
+                        <p class="section-subtitle">Each personality has a unique way of supporting you!</p>
+
+                        <div class="personality-grid">
+                            <div class="personality-option" data-personality="gentle"
+                                onclick="selectPersonality('gentle')">
+                                <img src="Gentle Guardian.jpeg" alt="Gentle Guardian" class="personality-image">
+                                <div class="personality-name">Gentle Guardian</div>
+                                <div class="personality-desc">Nurturing, supportive, patient</div>
+                            </div>
+
+                            <div class="personality-option" data-personality="playful"
+                                onclick="selectPersonality('playful')">
+                                <img src="Playful Pal.jpeg" alt="Playful Pal" class="personality-image">
+                                <div class="personality-name">Playful Pal</div>
+                                <div class="personality-desc">Energetic, fun, motivating</div>
+                            </div>
+
+                            <div class="personality-option" data-personality="focused"
+                                onclick="selectPersonality('focused')">
+                                <img src="Focused Friend.jpeg" alt="Focused Friend" class="personality-image">
+                                <div class="personality-name">Focused Friend</div>
+                                <div class="personality-desc">Calm, direct, mindful</div>
+                            </div>
+
+                            <div class="personality-option" data-personality="sensitive"
+                                onclick="selectPersonality('sensitive')">
+                                <img src="Sensitive Soul.png" alt="Sensitive Soul" class="personality-image">
+                                <div class="personality-name">Sensitive Soul</div>
+                                <div class="personality-desc">Empathetic, understanding, validating</div>
+                            </div>
+                        </div>
+
+                        <div id="personalityDetail" class="personality-detail" style="display: none;"></div>
+
+                        <button class="btn btn-primary" id="continuePersonality" onclick="confirmPersonality()"
+                            disabled>Continue</button>
+                    </div>
                 </div>
-                <input type="text" id="petName" class="user-input" placeholder="Give me a name...">
-                <button class="btn btn-primary" onclick="savePetName()">Continue</button>
+
+                <!-- Step 4: Pet Asks for User's Name -->
+                <div id="nameScreen" class="screen">
+                    <div class="conversation-card">
+                        <div class="pet-avatar-large" id="petAvatar">🐶</div>
+                        <div class="pet-message" id="nameGreeting">
+                            Hi there! I'm so excited to be your companion!<br>
+                            What should I call you?
+                        </div>
+                        <input type="text" id="userName" class="user-input" placeholder="Your name...">
+                        <button class="btn btn-primary" onclick="saveName()">Continue</button>
+                    </div>
+                </div>
+
+                <!-- Step 5: User Names the Pet -->
+                <div id="petNameScreen" class="screen">
+                    <div class="conversation-card">
+                        <div class="pet-avatar-large" id="petNameAvatar">🐶</div>
+                        <div class="pet-message" id="petNameGreeting">
+                            Nice to meet you, <span id="userNameDisplay"></span>!<br>
+                            What would you like to call me?
+                        </div>
+                        <input type="text" id="petName" class="user-input" placeholder="Give me a name...">
+                        <button class="btn btn-primary" onclick="savePetName()">Continue</button>
+                    </div>
+                </div>
+
+                <!-- Step 6: Pet Introduces Itself -->
+                <div id="introScreen" class="screen">
+                    <div class="conversation-card">
+                        <div class="pet-avatar-large" id="introPetAvatar">🐶</div>
+                        <div class="pet-message" id="introGreeting">Nice to meet you!</div>
+                        <p class="intro-text" id="introText">
+                            You can call me Buddy. I'm here to support your mental wellness journey.<br><br>
+                            I'll check in with you, listen to how you're feeling, and suggest activities that might
+                            help.<br><br>
+                            Ready to start?
+                        </p>
+                        <button class="btn btn-primary" onclick="completeOnboarding()">Let's Go!</button>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Step 6: Pet Introduces Itself -->
-        <div id="introScreen" class="screen">
-            <div class="conversation-card">
-                <div class="pet-avatar-large" id="introPetAvatar">🐶</div>
-                <div class="pet-message" id="introGreeting">Nice to meet you!</div>
-                <p class="intro-text" id="introText">
-                    You can call me Buddy. I'm here to support your mental wellness journey.<br><br>
-                    I'll check in with you, listen to how you're feeling, and suggest activities that might help.<br><br>
-                    Ready to start?
-                </p>
-                <button class="btn btn-primary" onclick="completeOnboarding()">Let's Go!</button>
-            </div>
-        </div>
-    </div>
+            <script>
+                // Cognito Configuration
+                const poolData = {
+                    UserPoolId: 'us-east-1_lWwId4NJq',
+                    ClientId: '5jkgbuofrsmrhme6iqtbc2c748'
+                };
+                const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+                const COGNITO_DOMAIN = 'mindmate-403745271636.auth.us-east-1.amazoncognito.com';
+                const REDIRECT_URI = window.location.origin + '/';
+                const API_BASE = 'https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com';
 
-    <script>
-        // Cognito Configuration
-        const poolData = {
-            UserPoolId: 'us-east-1_lWwId4NJq',
-            ClientId: '5jkgbuofrsmrhme6iqtbc2c748'
-        };
-        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
-        const COGNITO_DOMAIN = 'mindmate-403745271636.auth.us-east-1.amazoncognito.com';
-        const REDIRECT_URI = window.location.origin + '/';
-        const API_BASE = 'https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com';
+                // Onboarding State
+                let selectedPersonality = null;
+                let googleUserEmail = null;
 
-        // Onboarding State
-        let selectedPersonality = null;
-        let googleUserEmail = null;
-
-        // Personality Details
-        const personalityDetails = {
-            gentle: {
-                name: 'Gentle Guardian',
-                emoji: '🐶',
-                desc: 'patience and care',
-                greeting: 'Hi there! I\'m so excited to be your companion! What should I call you?',
-                intro: 'Nice to meet you, {name}! You can call me Buddy. I\'m here to support your mental wellness journey with patience and care.',
-                detail: 'The Gentle Guardian is nurturing and supportive. They speak with warmth and patience, always making you feel heard and validated.'
-            },
-            playful: {
-                name: 'Playful Pal',
-                emoji: '🐱',
-                desc: 'energy and fun',
-                greeting: 'Hey there! 😊 I\'m SO excited to meet you! What\'s your name?',
-                intro: 'Yay! Hi {name}! 🎉 I\'m Buddy, and I\'m here to make your wellness journey fun and uplifting!',
-                detail: 'The Playful Pal is energetic and fun! They bring positivity and motivation, helping you see the bright side of things.'
-            },
-            focused: {
-                name: 'Focused Friend',
-                emoji: '🐉',
-                desc: 'clarity and purpose',
-                greeting: 'Greetings. I\'m here to support you. What should I call you?',
-                intro: 'Perfect. Nice to meet you, {name}. I\'m Buddy. Let\'s work together on your mental wellness with clarity and purpose.',
-                detail: 'The Focused Friend is calm and direct. They help you stay mindful and goal-oriented, cutting through the noise.'
-            },
-            sensitive: {
-                name: 'Sensitive Soul',
-                emoji: '🦊',
-                desc: 'deep empathy',
-                greeting: 'Hi... I\'m so glad you\'re here. What should I call you?',
-                intro: 'It\'s wonderful to meet you, {name}... I\'m Buddy, and I\'m here to understand and support you with deep empathy.',
-                detail: 'The Sensitive Soul is deeply empathetic and understanding. They create a safe space where all your feelings are valid.'
-            }
-        };
-
-        // Navigation
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-        }
-
-        function showWelcome() {
-            showScreen('welcomeScreen');
-        }
-
-        function showLogin() {
-            showScreen('loginScreen');
-        }
-
-        // Google Sign-In
-        function signInWithGoogle() {
-            const googleAuthUrl = `https://${COGNITO_DOMAIN}/oauth2/authorize?` +
-                `client_id=${poolData.ClientId}&` +
-                `response_type=code&` +
-                `scope=email+openid+profile&` +
-                `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
-                `identity_provider=Google`;
-            
-            window.location.href = googleAuthUrl;
-        }
-
-        // Handle OAuth callback
-        async function handleOAuthCallback() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            
-            if (!code) return false;
-            
-            try {
-                // Exchange code for tokens
-                const tokenResponse = await fetch(`https://${COGNITO_DOMAIN}/oauth2/token`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                // Personality Details
+                const personalityDetails = {
+                    gentle: {
+                        name: 'Gentle Guardian',
+                        emoji: '🐶',
+                        desc: 'patience and care',
+                        greeting: 'Hi there! I\'m so excited to be your companion! What should I call you?',
+                        intro: 'Nice to meet you, {name}! You can call me Buddy. I\'m here to support your mental wellness journey with patience and care.',
+                        detail: 'The Gentle Guardian is nurturing and supportive. They speak with warmth and patience, always making you feel heard and validated.'
                     },
-                    body: new URLSearchParams({
-                        grant_type: 'authorization_code',
-                        client_id: poolData.ClientId,
-                        code: code,
-                        redirect_uri: REDIRECT_URI
-                    })
-                });
-                
-                const tokens = await tokenResponse.json();
-                
-                if (tokens.id_token) {
-                    // Decode JWT to get user info
-                    const payload = JSON.parse(atob(tokens.id_token.split('.')[1]));
-                    const userId = payload.sub;
-                    const email = payload.email;
-                    
-                    // Store tokens
-                    localStorage.setItem('mindmate_token', tokens.id_token);
-                    localStorage.setItem('mindmate_userId', userId);
-                    localStorage.setItem('mindmate_email', email);
-                    googleUserEmail = email;
-                    
-                    // Check if user has set username/password
+                    playful: {
+                        name: 'Playful Pal',
+                        emoji: '🐱',
+                        desc: 'energy and fun',
+                        greeting: 'Hey there! 😊 I\'m SO excited to meet you! What\'s your name?',
+                        intro: 'Yay! Hi {name}! 🎉 I\'m Buddy, and I\'m here to make your wellness journey fun and uplifting!',
+                        detail: 'The Playful Pal is energetic and fun! They bring positivity and motivation, helping you see the bright side of things.'
+                    },
+                    focused: {
+                        name: 'Focused Friend',
+                        emoji: '🐉',
+                        desc: 'clarity and purpose',
+                        greeting: 'Greetings. I\'m here to support you. What should I call you?',
+                        intro: 'Perfect. Nice to meet you, {name}. I\'m Buddy. Let\'s work together on your mental wellness with clarity and purpose.',
+                        detail: 'The Focused Friend is calm and direct. They help you stay mindful and goal-oriented, cutting through the noise.'
+                    },
+                    sensitive: {
+                        name: 'Sensitive Soul',
+                        emoji: '🦊',
+                        desc: 'deep empathy',
+                        greeting: 'Hi... I\'m so glad you\'re here. What should I call you?',
+                        intro: 'It\'s wonderful to meet you, {name}... I\'m Buddy, and I\'m here to understand and support you with deep empathy.',
+                        detail: 'The Sensitive Soul is deeply empathetic and understanding. They create a safe space where all your feelings are valid.'
+                    }
+                };
+
+                // Navigation
+                function showScreen(screenId) {
+                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                    document.getElementById(screenId).classList.add('active');
+                }
+
+                function showWelcome() {
+                    showScreen('welcomeScreen');
+                }
+
+                function showLogin() {
+                    showScreen('loginScreen');
+                }
+
+                // Test User Demo Mode
+                function startTestUser() {
+                    // Set up demo mode credentials and data
+                    localStorage.setItem('demoMode', 'true');
+                    localStorage.setItem('mindmate_token', 'demo-token');
+                    localStorage.setItem('mindmate_userId', 'a48804c8-c051-707b-cc34-d710830e0710'); // Demo user with ML data
+                    localStorage.setItem('mindmate_email', 'testuser@mindmate.demo');
+                    localStorage.setItem('mindmate_username', 'testuser');
+
+                    // Set up demo pet and personality
+                    localStorage.setItem('mindmate_personality', 'gentle');
+                    localStorage.setItem('mindmate_pet_image', 'Gentle Guardian.jpeg');
+                    localStorage.setItem('mindmate_pet_emoji', '🐶');
+                    localStorage.setItem('mindmate_petName', 'Buddy');
+                    localStorage.setItem('mindmate_userName', 'Demo User');
+                    localStorage.setItem('mindmate_onboarding_complete', 'true');
+
+                    // Redirect to main hackathon demo page with all ML features
+                    window.location.href = '/mind-mate-hackathon.html?demo=true';
+                }
+
+                // Google Sign-In
+                function signInWithGoogle() {
+                    const googleAuthUrl = `https://${COGNITO_DOMAIN}/oauth2/authorize?` +
+                        `client_id=${poolData.ClientId}&` +
+                        `response_type=code&` +
+                        `scope=email+openid+profile&` +
+                        `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+                        `identity_provider=Google`;
+
+                    window.location.href = googleAuthUrl;
+                }
+
+                // Handle OAuth callback
+                async function handleOAuthCallback() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const code = urlParams.get('code');
+
+                    if (!code) return false;
+
                     try {
-                        const response = await fetch(`${API_BASE}/profile`, {
-                            headers: { 'Authorization': `Bearer ${tokens.id_token}` }
+                        // Exchange code for tokens
+                        const tokenResponse = await fetch(`https://${COGNITO_DOMAIN}/oauth2/token`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: new URLSearchParams({
+                                grant_type: 'authorization_code',
+                                client_id: poolData.ClientId,
+                                code: code,
+                                redirect_uri: REDIRECT_URI
+                            })
                         });
-                        const data = await response.json();
-                        
-                        if (data.profile && data.profile.hasPassword) {
-                            // User has already set password, check onboarding
-                            if (data.profile.onboardingComplete) {
-                                window.location.href = '/mind-mate-hackathon.html';
-                            } else {
+
+                        const tokens = await tokenResponse.json();
+
+                        if (tokens.id_token) {
+                            // Decode JWT to get user info
+                            const payload = JSON.parse(atob(tokens.id_token.split('.')[1]));
+                            const userId = payload.sub;
+                            const email = payload.email;
+
+                            // Store tokens
+                            localStorage.setItem('mindmate_token', tokens.id_token);
+                            localStorage.setItem('mindmate_userId', userId);
+                            localStorage.setItem('mindmate_email', email);
+                            googleUserEmail = email;
+
+                            // Check if user has set username/password
+                            try {
+                                const response = await fetch(`${API_BASE}/profile`, {
+                                    headers: { 'Authorization': `Bearer ${tokens.id_token}` }
+                                });
+                                const data = await response.json();
+
+                                if (data.profile && data.profile.hasPassword) {
+                                    // User has already set password, check onboarding
+                                    if (data.profile.onboardingComplete) {
+                                        window.location.href = '/mind-mate-hackathon.html';
+                                    } else {
+                                        showScreen('personalityScreen');
+                                    }
+                                } else {
+                                    // First time Google user - need to set username/password
+                                    showScreen('setPasswordScreen');
+                                }
+                            } catch (error) {
+                                // If profile doesn't exist, show set password screen
+                                showScreen('setPasswordScreen');
+                            }
+
+                            // Clean URL
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                            return true;
+                        }
+                    } catch (error) {
+                        console.error('OAuth callback error:', error);
+                        showError('loginError', 'Failed to sign in with Google. Please try again.');
+                    }
+
+                    return false;
+                }
+
+                // Set Username & Password (for Google users)
+                async function setPassword() {
+                    const username = document.getElementById('newUsername').value.trim();
+                    const password = document.getElementById('newPassword').value;
+
+                    if (!username || !password) {
+                        showError('setPasswordError', 'Please fill in all fields');
+                        return;
+                    }
+
+                    if (password.length < 8) {
+                        showError('setPasswordError', 'Password must be at least 8 characters');
+                        return;
+                    }
+
+                    // Validate password requirements
+                    const hasUppercase = /[A-Z]/.test(password);
+                    const hasLowercase = /[a-z]/.test(password);
+                    const hasNumber = /[0-9]/.test(password);
+
+                    if (!hasUppercase || !hasLowercase || !hasNumber) {
+                        showError('setPasswordError', 'Password must include uppercase, lowercase, and number');
+                        return;
+                    }
+
+                    try {
+                        const token = localStorage.getItem('mindmate_token');
+                        const userId = localStorage.getItem('mindmate_userId');
+
+                        console.log('Token:', token ? token.substring(0, 50) + '...' : 'NO TOKEN');
+                        console.log('UserId:', userId);
+
+                        // Call backend to set password for Cognito user
+                        const response = await fetch(`${API_BASE}/set-password`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                userId: userId,
+                                username: username,
+                                password: password
+                            })
+                        });
+
+                        console.log('Response status:', response.status);
+                        const responseText = await response.text();
+                        console.log('Response body:', responseText);
+
+                        const data = JSON.parse(responseText);
+
+                        if (response.ok && data.ok) {
+                            // Store username locally
+                            localStorage.setItem('mindmate_username', username);
+
+                            // Continue to personality selection
+                            showScreen('personalityScreen');
+                        } else {
+                            showError('setPasswordError', data.error || data.message || 'Failed to set password');
+                        }
+                    } catch (error) {
+                        console.error('Set password error:', error);
+                        showError('setPasswordError', 'Failed to set password. Please try again.');
+                    }
+                }
+
+                // Personality Selection
+                function selectPersonality(personality) {
+                    selectedPersonality = personality;
+
+                    // Update UI
+                    document.querySelectorAll('.personality-option').forEach(card => {
+                        card.classList.remove('selected');
+                    });
+                    document.querySelector(`[data-personality="${personality}"]`).classList.add('selected');
+
+                    // Show personality detail
+                    const detail = document.getElementById('personalityDetail');
+                    detail.textContent = personalityDetails[personality].detail;
+                    detail.style.display = 'block';
+
+                    // Enable continue button
+                    document.getElementById('continuePersonality').disabled = false;
+                }
+
+                async function confirmPersonality() {
+                    if (!selectedPersonality) return;
+
+                    try {
+                        const token = localStorage.getItem('mindmate_token');
+
+                        // Save to backend
+                        await fetch(`${API_BASE}/profile`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ personality: selectedPersonality })
+                        });
+
+                        // Store locally
+                        localStorage.setItem('mindmate_personality', selectedPersonality);
+
+                        // Update name screen with personality
+                        const details = personalityDetails[selectedPersonality];
+                        document.getElementById('petAvatar').textContent = details.emoji;
+                        document.getElementById('nameGreeting').innerHTML = details.greeting;
+
+                        // Navigate to name screen
+                        showScreen('nameScreen');
+                    } catch (error) {
+                        console.error('Error saving personality:', error);
+                        // Continue anyway for demo
+                        localStorage.setItem('mindmate_personality', selectedPersonality);
+                        const details = personalityDetails[selectedPersonality];
+                        document.getElementById('petAvatar').textContent = details.emoji;
+                        document.getElementById('nameGreeting').innerHTML = details.greeting;
+                        showScreen('nameScreen');
+                    }
+                }
+
+                // Name Input
+                async function saveName() {
+                    const userName = document.getElementById('userName').value.trim();
+
+                    if (!userName) {
+                        alert('Please enter your name');
+                        return;
+                    }
+
+                    // Store user name
+                    localStorage.setItem('mindmate_userName', userName);
+
+                    // Update pet name screen
+                    const personality = localStorage.getItem('mindmate_personality');
+                    const details = personalityDetails[personality];
+                    document.getElementById('petNameAvatar').textContent = details.emoji;
+                    document.getElementById('userNameDisplay').textContent = userName;
+
+                    // Navigate to pet name screen
+                    showScreen('petNameScreen');
+                }
+
+                // Pet Name Input
+                async function savePetName() {
+                    const petName = document.getElementById('petName').value.trim();
+
+                    if (!petName) {
+                        alert('Please give your companion a name');
+                        return;
+                    }
+
+                    try {
+                        const token = localStorage.getItem('mindmate_token');
+                        const userName = localStorage.getItem('mindmate_userName');
+                        const personality = localStorage.getItem('mindmate_personality');
+
+                        // Save to backend
+                        await fetch(`${API_BASE}/profile`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                userName: userName,
+                                petName: petName,
+                                personality: personality
+                            })
+                        });
+
+                        // Store locally
+                        localStorage.setItem('mindmate_petName', petName);
+                        localStorage.setItem('mindmate_pet_emoji', personalityDetails[personality].emoji);
+
+                        // Update intro screen
+                        const details = personalityDetails[personality];
+                        document.getElementById('introPetAvatar').textContent = details.emoji;
+                        document.getElementById('introGreeting').textContent = `Nice to meet you, ${userName}!`;
+                        document.getElementById('introText').innerHTML = `You can call me ${petName}. I'm your ${details.name}. I'm here to support your mental wellness journey with ${details.desc.toLowerCase()}.<br><br>I'll check in with you, listen to how you're feeling, and suggest activities that might help.<br><br>Ready to start?`;
+
+                        // Navigate to intro screen
+                        showScreen('introScreen');
+                    } catch (error) {
+                        console.error('Error saving pet name:', error);
+                        // Continue anyway for demo
+                        const personality = localStorage.getItem('mindmate_personality');
+                        const userName = localStorage.getItem('mindmate_userName');
+                        localStorage.setItem('mindmate_petName', petName);
+                        localStorage.setItem('mindmate_pet_emoji', personalityDetails[personality].emoji);
+                        const details = personalityDetails[personality];
+                        document.getElementById('introPetAvatar').textContent = details.emoji;
+                        document.getElementById('introGreeting').textContent = `Nice to meet you, ${userName}!`;
+                        document.getElementById('introText').innerHTML = `You can call me ${petName}. I'm your ${details.name}. I'm here to support your mental wellness journey with ${details.desc}.<br><br>I'll check in with you, listen to how you're feeling, and suggest activities that might help.<br><br>Ready to start?`;
+                        showScreen('introScreen');
+                    }
+                }
+
+                // Complete Onboarding
+                async function completeOnboarding() {
+                    try {
+                        const token = localStorage.getItem('mindmate_token');
+
+                        // Mark onboarding complete
+                        await fetch(`${API_BASE}/profile`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ onboardingComplete: true })
+                        });
+
+                        localStorage.setItem('mindmate_onboardingComplete', 'true');
+
+                        // Redirect to main app
+                        window.location.href = '/mind-mate-hackathon.html';
+                    } catch (error) {
+                        console.error('Error completing onboarding:', error);
+                        // Still redirect even if API fails
+                        localStorage.setItem('mindmate_onboardingComplete', 'true');
+                        window.location.href = '/mind-mate-hackathon.html';
+                    }
+                }
+
+                // Username/Password Login (for returning users)
+                function login() {
+                    const username = document.getElementById('loginUsername').value.trim();
+                    const password = document.getElementById('loginPassword').value;
+
+                    if (!username || !password) {
+                        showError('loginError', 'Please fill in all fields');
+                        return;
+                    }
+
+                    const authData = { Username: username, Password: password };
+                    const authDetails = new AmazonCognitoIdentity.AuthenticationDetails(authData);
+                    const userData = { Username: username, Pool: userPool };
+                    const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+                    cognitoUser.authenticateUser(authDetails, {
+                        onSuccess: async (result) => {
+                            const token = result.getIdToken().getJwtToken();
+                            const userId = result.getIdToken().payload.sub;
+
+                            localStorage.setItem('mindmate_token', token);
+                            localStorage.setItem('mindmate_userId', userId);
+                            localStorage.setItem('mindmate_username', username);
+
+                            // Check if onboarding is complete
+                            try {
+                                const response = await fetch(`${API_BASE}/profile`, {
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                const data = await response.json();
+
+                                if (data.profile && data.profile.onboardingComplete) {
+                                    window.location.href = '/mind-mate-hackathon.html';
+                                } else {
+                                    showScreen('personalityScreen');
+                                }
+                            } catch (error) {
                                 showScreen('personalityScreen');
                             }
-                        } else {
-                            // First time Google user - need to set username/password
-                            showScreen('setPasswordScreen');
+                        },
+                        onFailure: (err) => {
+                            showError('loginError', err.message || 'Invalid username or password');
                         }
-                    } catch (error) {
-                        // If profile doesn't exist, show set password screen
-                        showScreen('setPasswordScreen');
-                    }
-                    
-                    // Clean URL
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    return true;
+                    });
                 }
-            } catch (error) {
-                console.error('OAuth callback error:', error);
-                showError('loginError', 'Failed to sign in with Google. Please try again.');
-            }
-            
-            return false;
-        }
 
-        // Set Username & Password (for Google users)
-        async function setPassword() {
-            const username = document.getElementById('newUsername').value.trim();
-            const password = document.getElementById('newPassword').value;
-            
-            if (!username || !password) {
-                showError('setPasswordError', 'Please fill in all fields');
-                return;
-            }
-            
-            if (password.length < 8) {
-                showError('setPasswordError', 'Password must be at least 8 characters');
-                return;
-            }
-            
-            // Validate password requirements
-            const hasUppercase = /[A-Z]/.test(password);
-            const hasLowercase = /[a-z]/.test(password);
-            const hasNumber = /[0-9]/.test(password);
-            
-            if (!hasUppercase || !hasLowercase || !hasNumber) {
-                showError('setPasswordError', 'Password must include uppercase, lowercase, and number');
-                return;
-            }
-            
-            try {
-                const token = localStorage.getItem('mindmate_token');
-                const userId = localStorage.getItem('mindmate_userId');
-                
-                console.log('Token:', token ? token.substring(0, 50) + '...' : 'NO TOKEN');
-                console.log('UserId:', userId);
-                
-                // Call backend to set password for Cognito user
-                const response = await fetch(`${API_BASE}/set-password`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        userId: userId,
-                        username: username,
-                        password: password
-                    })
-                });
-                
-                console.log('Response status:', response.status);
-                const responseText = await response.text();
-                console.log('Response body:', responseText);
-                
-                const data = JSON.parse(responseText);
-                
-                if (response.ok && data.ok) {
-                    // Store username locally
-                    localStorage.setItem('mindmate_username', username);
-                    
-                    // Continue to personality selection
-                    showScreen('personalityScreen');
-                } else {
-                    showError('setPasswordError', data.error || data.message || 'Failed to set password');
+                function showError(elementId, message) {
+                    const el = document.getElementById(elementId);
+                    el.textContent = message;
+                    el.style.display = 'block';
+                    setTimeout(() => el.style.display = 'none', 5000);
                 }
-            } catch (error) {
-                console.error('Set password error:', error);
-                showError('setPasswordError', 'Failed to set password. Please try again.');
-            }
-        }
 
-        // Personality Selection
-        function selectPersonality(personality) {
-            selectedPersonality = personality;
-            
-            // Update UI
-            document.querySelectorAll('.personality-option').forEach(card => {
-                card.classList.remove('selected');
-            });
-            document.querySelector(`[data-personality="${personality}"]`).classList.add('selected');
-            
-            // Show personality detail
-            const detail = document.getElementById('personalityDetail');
-            detail.textContent = personalityDetails[personality].detail;
-            detail.style.display = 'block';
-            
-            // Enable continue button
-            document.getElementById('continuePersonality').disabled = false;
-        }
+                // Check if already logged in or handle OAuth callback
+                window.onload = async () => {
+                    // First, check for OAuth callback
+                    const hasCallback = await handleOAuthCallback();
 
-        async function confirmPersonality() {
-            if (!selectedPersonality) return;
-            
-            try {
-                const token = localStorage.getItem('mindmate_token');
-                
-                // Save to backend
-                await fetch(`${API_BASE}/profile`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ personality: selectedPersonality })
-                });
-                
-                // Store locally
-                localStorage.setItem('mindmate_personality', selectedPersonality);
-                
-                // Update name screen with personality
-                const details = personalityDetails[selectedPersonality];
-                document.getElementById('petAvatar').textContent = details.emoji;
-                document.getElementById('nameGreeting').innerHTML = details.greeting;
-                
-                // Navigate to name screen
-                showScreen('nameScreen');
-            } catch (error) {
-                console.error('Error saving personality:', error);
-                // Continue anyway for demo
-                localStorage.setItem('mindmate_personality', selectedPersonality);
-                const details = personalityDetails[selectedPersonality];
-                document.getElementById('petAvatar').textContent = details.emoji;
-                document.getElementById('nameGreeting').innerHTML = details.greeting;
-                showScreen('nameScreen');
-            }
-        }
+                    if (!hasCallback) {
+                        // Check if user is already logged in
+                        const token = localStorage.getItem('mindmate_token');
+                        const onboardingComplete = localStorage.getItem('mindmate_onboardingComplete');
 
-        // Name Input
-        async function saveName() {
-            const userName = document.getElementById('userName').value.trim();
-            
-            if (!userName) {
-                alert('Please enter your name');
-                return;
-            }
-            
-            // Store user name
-            localStorage.setItem('mindmate_userName', userName);
-            
-            // Update pet name screen
-            const personality = localStorage.getItem('mindmate_personality');
-            const details = personalityDetails[personality];
-            document.getElementById('petNameAvatar').textContent = details.emoji;
-            document.getElementById('userNameDisplay').textContent = userName;
-            
-            // Navigate to pet name screen
-            showScreen('petNameScreen');
-        }
-
-        // Pet Name Input
-        async function savePetName() {
-            const petName = document.getElementById('petName').value.trim();
-            
-            if (!petName) {
-                alert('Please give your companion a name');
-                return;
-            }
-            
-            try {
-                const token = localStorage.getItem('mindmate_token');
-                const userName = localStorage.getItem('mindmate_userName');
-                const personality = localStorage.getItem('mindmate_personality');
-                
-                // Save to backend
-                await fetch(`${API_BASE}/profile`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        userName: userName,
-                        petName: petName,
-                        personality: personality
-                    })
-                });
-                
-                // Store locally
-                localStorage.setItem('mindmate_petName', petName);
-                localStorage.setItem('mindmate_pet_emoji', personalityDetails[personality].emoji);
-                
-                // Update intro screen
-                const details = personalityDetails[personality];
-                document.getElementById('introPetAvatar').textContent = details.emoji;
-                document.getElementById('introGreeting').textContent = `Nice to meet you, ${userName}!`;
-                document.getElementById('introText').innerHTML = `You can call me ${petName}. I'm your ${details.name}. I'm here to support your mental wellness journey with ${details.desc.toLowerCase()}.<br><br>I'll check in with you, listen to how you're feeling, and suggest activities that might help.<br><br>Ready to start?`;
-                
-                // Navigate to intro screen
-                showScreen('introScreen');
-            } catch (error) {
-                console.error('Error saving pet name:', error);
-                // Continue anyway for demo
-                const personality = localStorage.getItem('mindmate_personality');
-                const userName = localStorage.getItem('mindmate_userName');
-                localStorage.setItem('mindmate_petName', petName);
-                localStorage.setItem('mindmate_pet_emoji', personalityDetails[personality].emoji);
-                const details = personalityDetails[personality];
-                document.getElementById('introPetAvatar').textContent = details.emoji;
-                document.getElementById('introGreeting').textContent = `Nice to meet you, ${userName}!`;
-                document.getElementById('introText').innerHTML = `You can call me ${petName}. I'm your ${details.name}. I'm here to support your mental wellness journey with ${details.desc}.<br><br>I'll check in with you, listen to how you're feeling, and suggest activities that might help.<br><br>Ready to start?`;
-                showScreen('introScreen');
-            }
-        }
-
-        // Complete Onboarding
-        async function completeOnboarding() {
-            try {
-                const token = localStorage.getItem('mindmate_token');
-                
-                // Mark onboarding complete
-                await fetch(`${API_BASE}/profile`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ onboardingComplete: true })
-                });
-                
-                localStorage.setItem('mindmate_onboardingComplete', 'true');
-                
-                // Redirect to main app
-                window.location.href = '/mind-mate-hackathon.html';
-            } catch (error) {
-                console.error('Error completing onboarding:', error);
-                // Still redirect even if API fails
-                localStorage.setItem('mindmate_onboardingComplete', 'true');
-                window.location.href = '/mind-mate-hackathon.html';
-            }
-        }
-
-        // Username/Password Login (for returning users)
-        function login() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            
-            if (!username || !password) {
-                showError('loginError', 'Please fill in all fields');
-                return;
-            }
-            
-            const authData = { Username: username, Password: password };
-            const authDetails = new AmazonCognitoIdentity.AuthenticationDetails(authData);
-            const userData = { Username: username, Pool: userPool };
-            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
-            
-            cognitoUser.authenticateUser(authDetails, {
-                onSuccess: async (result) => {
-                    const token = result.getIdToken().getJwtToken();
-                    const userId = result.getIdToken().payload.sub;
-                    
-                    localStorage.setItem('mindmate_token', token);
-                    localStorage.setItem('mindmate_userId', userId);
-                    localStorage.setItem('mindmate_username', username);
-                    
-                    // Check if onboarding is complete
-                    try {
-                        const response = await fetch(`${API_BASE}/profile`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        const data = await response.json();
-                        
-                        if (data.profile && data.profile.onboardingComplete) {
+                        if (token && onboardingComplete === 'true') {
                             window.location.href = '/mind-mate-hackathon.html';
-                        } else {
-                            showScreen('personalityScreen');
                         }
-                    } catch (error) {
-                        showScreen('personalityScreen');
                     }
-                },
-                onFailure: (err) => {
-                    showError('loginError', err.message || 'Invalid username or password');
-                }
-            });
-        }
-
-        function showError(elementId, message) {
-            const el = document.getElementById(elementId);
-            el.textContent = message;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 5000);
-        }
-
-        // Check if already logged in or handle OAuth callback
-        window.onload = async () => {
-            // First, check for OAuth callback
-            const hasCallback = await handleOAuthCallback();
-            
-            if (!hasCallback) {
-                // Check if user is already logged in
-                const token = localStorage.getItem('mindmate_token');
-                const onboardingComplete = localStorage.getItem('mindmate_onboardingComplete');
-                
-                if (token && onboardingComplete === 'true') {
-                    window.location.href = '/mind-mate-hackathon.html';
-                }
-            }
-        };
-    </script>
+                };
+            </script>
 </body>
+
 </html>
