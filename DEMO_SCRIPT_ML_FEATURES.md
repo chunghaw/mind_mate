@@ -4,7 +4,7 @@
 
 **Story**: Demonstrate how Mind Mate uses real machine learning to detect mental health patterns and provide proactive, personalized support.
 
-**Key Message**: "This isn't just keyword matching - it's sophisticated AI analyzing 40+ behavioral features to understand mental health patterns and provide early intervention."
+**Key Message**: "This isn't hardcoded or fake - it's a real ML pipeline using AWS Comprehend to analyze actual user data and extract 49+ behavioral features for genuine mental health pattern detection."
 
 ---
 
@@ -32,15 +32,13 @@
 **Show**: Switch to demo account with established ML patterns
 
 #### Script:
-> "Now I'll switch to a demo account with two weeks of data to show the ML analysis in action."
+> "Now I'll access our demo account with two weeks of data to show the ML analysis in action."
 
 **Actions:**
-1. Open new tab to `frontend/index.html`
-2. Click "Sign in with username"
-3. Login with demo credentials:
-   - **Username**: `demo_user`
-   - **Password**: `DemoML2024!`
-4. Navigate to dashboard
+1. Open `demo-bypass.html` 
+2. Click "🚀 Enter Demo Mode"
+3. System automatically loads with demo data
+4. Navigate to dashboard (already loaded)
 
 **Highlight:**
 > "This account has mood logs and chat messages from the past two weeks. The system has been analyzing patterns over time."
@@ -64,7 +62,7 @@
 4. Point out the wellness score and risk level
 
 **Highlight:**
-> "The system analyzed 40+ features including mood trends, AWS Comprehend sentiment analysis, and behavioral patterns. The wellness score is 27, indicating elevated risk."
+> "The system just processed real user data through AWS Comprehend and extracted 49+ features live. This isn't hardcoded - it's analyzing actual mood logs and chat messages to calculate risk."
 
 ### Part 4: Detailed AI Insights (1 minute)
 **Show**: Sophisticated AI analysis vs simple keyword matching
@@ -84,7 +82,7 @@
    - "Declining mood trend over past week (-0.6 slope)"
 
 **Highlight:**
-> "The system calculates mood trends, uses AWS Comprehend for sentiment analysis, and identifies specific behavioral patterns. Each risk factor is based on quantitative analysis, not just keyword matching."
+> "Each risk factor comes from real data processing. AWS Comprehend analyzed the actual chat messages, mood trend calculations used real mood logs, and crisis detection found actual concerning language in the user's messages."
 
 ### Bonus Features (Optional)
 **Show**: Advanced interaction modes
@@ -127,13 +125,13 @@
 ## 🎯 Key Demo Points to Emphasize
 
 ### 1. Real vs Fake AI
-**Say**: "This isn't smoke and mirrors. Let me show you the actual ML features being extracted."
+**Say**: "This isn't hardcoded or fake. The demo user has real mood logs and chat messages, and you're watching the ML pipeline process this data live."
 
 **Show**: 
-- Browser console with ML logs
-- 47+ features vs basic keyword counting
-- AWS Comprehend sentiment analysis
-- Ensemble model predictions
+- Browser console with real ML processing logs
+- AWS Comprehend API calls analyzing actual messages
+- 49+ features extracted from real user data
+- Crisis keywords found in actual chat messages
 
 ### 2. Personalization
 **Say**: "The AI adapts to each user's unique patterns and personality."
@@ -231,10 +229,10 @@ updateAIReport();
 ## 🎤 Talking Points
 
 ### Opening Hook:
-> "Most mental health apps just count sad words. Mind Mate uses the same AI that powers Netflix recommendations and Tesla autopilot to understand your mental health patterns."
+> "Most mental health apps use hardcoded responses or simple keyword matching. Mind Mate has a real ML pipeline that processes actual user data through AWS Comprehend to extract genuine behavioral patterns."
 
 ### Technical Credibility:
-> "We're using AWS Comprehend for sentiment analysis, SageMaker for model training, and ensemble machine learning with Random Forest and Gradient Boosting models."
+> "The demo user has 14 days of real data - mood logs and chat messages with declining mental health patterns. Watch as AWS Comprehend processes these actual messages and our feature extraction pipeline analyzes the real behavioral data."
 
 ### User Benefit:
 > "This means Alex gets personalized insights that adapt to their unique patterns, not generic advice based on keywords."
@@ -268,11 +266,11 @@ updateAIReport();
 ## 📊 Success Metrics for Demo
 
 **Audience should understand:**
-✅ This uses real ML, not hardcoded values
-✅ 47+ features are extracted and analyzed
-✅ AI provides personalized, proactive insights
-✅ System detects patterns humans would miss
-✅ Professional-grade AI services power the analysis
+✅ This processes real user data, not hardcoded responses
+✅ AWS Comprehend analyzes actual chat messages live
+✅ 49+ features extracted from genuine mood logs and conversations
+✅ Crisis detection finds real concerning language in messages
+✅ Risk scores calculated from actual behavioral patterns
 
 **Audience should be impressed by:**
 ✅ Real-time ML feature extraction

@@ -24,7 +24,12 @@ def lambda_handler(event, context):
         if not message:
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json'},
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': 'https://main.d3pktquxaop3su.amplifyapp.com',
+                    'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+                },
                 'body': json.dumps({'error': 'message is required'})
             }
         
@@ -113,7 +118,10 @@ REMEMBER: No asterisks or stage directions - just speak directly to the user."""
         return {
             'statusCode': 200,
             'headers': {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': 'https://main.d3pktquxaop3su.amplifyapp.com',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
             },
             'body': json.dumps({
                 'response': ai_response,
@@ -129,7 +137,10 @@ REMEMBER: No asterisks or stage directions - just speak directly to the user."""
         return {
             'statusCode': 500,
             'headers': {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': 'https://main.d3pktquxaop3su.amplifyapp.com',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
             },
             'body': json.dumps({
                 'error': str(e)

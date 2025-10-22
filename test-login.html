@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.7/dist/amazon-cognito-identity.min.js"></script>
+</head>
+<body>
+    <h1>Test Demo Login</h1>
+    <button onclick="testLogin()">Test Login: demo_user / DemoML2024!</button>
+    <div id="result"></div>
+
+    <script>
+        const poolData = {
+            UserPoolId: 'us-east-1_lWwId4NJq',
+            ClientId: '5jkgbuofrsmrhme6iqtbc2c748'
+        };
+        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+        function testLogin() {
+            const authData = {
+                Username: 'demo_user',
+                Password: 'DemoML2024!'
+            };
+
+            const authDetails = new AmazonCognitoIdentity.AuthenticationDetails(authData);
+            const userData = {
+                Username: 'demo_user',
+                Pool: userPool
+            };
+
+            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+            document.getElementById('result').innerHTML = 'Testing login...';
+
+            cognitoUser.authenticateUser(authDetails, {
+                onSuccess: (result) => {
+                    document.getElementById('result').innerHTML = 
+                        '<h2 style="color: green;">✅ LOGIN SUCCESS!</h2>' +
+                        '<p>User ID: ' + result.getIdToken().payload.sub + '</p>' +
+                        '<p>Token: ' + result.getIdToken().getJwtToken().substring(0, 50) + '...</p>';
+                },
+                onFailure: (err) => {
+                    document.getElementById('result').innerHTML = 
+                        '<h2 style="color: red;">❌ LOGIN FAILED</h2>' +
+                        '<p>Error: ' + err.message + '</p>';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

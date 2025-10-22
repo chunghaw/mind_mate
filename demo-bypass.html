@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Mate - Demo Access</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .demo-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+        }
+        h1 {
+            color: #1a202c;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .demo-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            transition: transform 0.2s ease;
+        }
+        .demo-btn:hover {
+            transform: translateY(-2px);
+        }
+        .demo-info {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .demo-info h3 {
+            margin-top: 0;
+            color: #1a202c;
+        }
+        .demo-info ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .demo-info li {
+            margin-bottom: 5px;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-card">
+        <img src="frontend/Mind_Mate.jpeg" alt="Mind Mate" class="logo">
+        <h1>Mind Mate Demo</h1>
+        <p class="subtitle">AI-Powered Mental Health Companion</p>
+        
+        <button class="demo-btn" onclick="enterDemo()">
+            🚀 Enter Demo Mode
+        </button>
+        
+        <button class="demo-btn" onclick="goToLogin()" style="background: #e2e8f0; color: #4a5568;">
+            🔐 Try Real Login
+        </button>
+        
+        <div class="demo-info">
+            <h3>🎯 Demo Features</h3>
+            <ul>
+                <li>✅ AI-powered wellness analysis</li>
+                <li>✅ Real-time ML feature extraction</li>
+                <li>✅ Personalized risk assessment</li>
+                <li>✅ Interactive chat companion</li>
+                <li>✅ Clear chat functionality</li>
+            </ul>
+            
+            <h3>🔧 Demo Credentials (if login works)</h3>
+            <p><strong>Username:</strong> demo_user<br>
+            <strong>Password:</strong> DemoML2024!</p>
+        </div>
+    </div>
+
+    <script>
+        function enterDemo() {
+            // Set demo user in localStorage
+            localStorage.setItem('demoMode', 'true');
+            localStorage.setItem('userId', 'demo-user-123');
+            localStorage.setItem('userEmail', 'demo@mindmate.ai');
+            localStorage.setItem('userName', 'Demo User');
+            
+            // Redirect to main app
+            window.location.href = 'frontend/mind-mate-hackathon.html';
+        }
+        
+        function goToLogin() {
+            window.location.href = 'frontend/index.html';
+        }
+    </script>
+</body>
+</html>

@@ -29,7 +29,7 @@ deploy_lambda() {
     
     echo "📦 Deploying $FUNCTION_NAME..."
     
-    cd "../backend/lambdas/$FUNCTION_NAME"
+    cd "backend/lambdas/$FUNCTION_NAME"
     
     # Create deployment package
     zip -q -r function.zip .
