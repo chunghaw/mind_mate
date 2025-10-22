@@ -3,7 +3,6 @@ import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 import boto3
-import numpy as np
 
 dynamodb = boto3.resource('dynamodb')
 comprehend = boto3.client('comprehend', region_name='us-east-1')
@@ -153,11 +152,18 @@ def calculate_sentiment_trend(sentiments):
         # Use negative sentiment scores for trend
         negative_scores = [s['scores']['Negative'] for s in sentiments]
         
-        x = np.arange(len(negative_scores))
-        y = np.array(negative_scores)
-        
-        coefficients = np.polyfit(x, y, 1)
-        slope = float(coefficients[0])
+        n = len(negative_scores)
+        if n < 2:
+            slope = 0.0
+        else:
+            x_vals = list(range(n))
+            x_mean = sum(x_vals) / n
+            y_mean = sum(negative_scores) / n
+            
+            numerator = sum((x_vals[i] - x_mean) * (negative_scores[i] - y_mean) for i in range(n))
+            denominator = sum((x_vals[i] - x_mean) ** 2 for i in range(n))
+            
+            slope = numerator / denominator if denominator != 0 else 0.0
         
         return slope
     except Exception as e:
@@ -173,7 +179,7 @@ def calculate_sentiment_volatility(sentiments):
         negative_scores = [s['scores']['Negative'] for s in sentiments]
         daily_changes = [abs(negative_scores[i] - negative_scores[i-1]) 
                         for i in range(1, len(negative_scores))]
-        return float(np.mean(daily_changes))
+        return float(sum(daily_changes) / len(daily_changes)) if daily_changes else 0.0
     except Exception as e:
         print(f"Error calculating sentiment volatility: {e}")
         return 0.0
@@ -223,7 +229,8 @@ def calculate_hopelessness_score(messages, sentiments):
     
     try:
         # Combine negative sentiment with despair keywords
-        avg_negative = np.mean([s['scores']['Negative'] for s in sentiments])
+        negative_scores = [s['scores']['Negative'] for s in sentiments]
+        avg_negative = sum(negative_scores) / len(negative_scores) if negative_scores else 0.0
         despair_count = count_despair_keywords(messages)
         
         # Normalize despair count (0-1 scale, max 5 keywords)
@@ -325,9 +332,9 @@ def extract_sentiment_features(user_id, days=30):
         'mixed_sentiment_frequency': mixed_count / total,
         
         # Sentiment scores
-        'avg_negative_score': float(np.mean([s['scores']['Negative'] for s in sentiments])),
-        'avg_positive_score': float(np.mean([s['scores']['Positive'] for s in sentiments])),
-        'avg_neutral_score': float(np.mean([s['scores']['Neutral'] for s in sentiments])),
+        'avg_negative_score': float(sum(s['scores']['Negative'] for s in sentiments) / len(sentiments)) if sentiments else 0.0,
+        'avg_positive_score': float(sum(s['scores']['Positive'] for s in sentiments) / len(sentiments)) if sentiments else 0.0,
+        'avg_neutral_score': float(sum(s['scores']['Neutral'] for s in sentiments) / len(sentiments)) if sentiments else 0.0,
         
         # Volatility
         'sentiment_volatility': calculate_sentiment_volatility(sentiments),

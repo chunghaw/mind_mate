@@ -2373,6 +2373,8 @@
             static async enhanceWithML(userId, basicData) {
                 console.log('🔬 Enhancing basic data with comprehensive ML analysis...');
 
+
+
                 try {
                     // Extract all ML features in parallel
                     const [moodFeatures, sentimentFeatures, behavioralFeatures] = await Promise.allSettled([
@@ -4192,6 +4194,9 @@
                 }
 
                 console.log(`🧠 Loading ML-powered wellness analysis for user: ${USER_ID}`);
+                
+
+                
                 const riskData = await APIClient.calculateRisk(USER_ID);
 
                 // Log ML method used

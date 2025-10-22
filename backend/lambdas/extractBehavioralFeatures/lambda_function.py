@@ -3,7 +3,6 @@ import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 import boto3
-import numpy as np
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ.get('TABLE_NAME', 'EmoCompanion'))
@@ -142,11 +141,19 @@ def calculate_engagement_trend(interactions):
         dates = sorted(daily_counts.keys())
         counts = [daily_counts[d] for d in dates]
         
-        x = np.arange(len(counts))
-        y = np.array(counts)
-        
-        coefficients = np.polyfit(x, y, 1)
-        slope = float(coefficients[0])
+        # Simple linear regression without numpy
+        n = len(counts)
+        if n < 2:
+            slope = 0.0
+        else:
+            x_vals = list(range(n))
+            x_mean = sum(x_vals) / n
+            y_mean = sum(counts) / n
+            
+            numerator = sum((x_vals[i] - x_mean) * (counts[i] - y_mean) for i in range(n))
+            denominator = sum((x_vals[i] - x_mean) ** 2 for i in range(n))
+            
+            slope = numerator / denominator if denominator != 0 else 0.0
         
         return slope
     except Exception as e:
@@ -173,11 +180,18 @@ def calculate_response_time_trend(interactions):
             return 0.0
         
         # Calculate trend (positive = increasing time between interactions = declining engagement)
-        x = np.arange(len(response_times))
-        y = np.array(response_times)
-        
-        coefficients = np.polyfit(x, y, 1)
-        slope = float(coefficients[0])
+        n = len(response_times)
+        if n < 2:
+            slope = 0.0
+        else:
+            x_vals = list(range(n))
+            x_mean = sum(x_vals) / n
+            y_mean = sum(response_times) / n
+            
+            numerator = sum((x_vals[i] - x_mean) * (response_times[i] - y_mean) for i in range(n))
+            denominator = sum((x_vals[i] - x_mean) ** 2 for i in range(n))
+            
+            slope = numerator / denominator if denominator != 0 else 0.0
         
         return slope
     except Exception as e:
@@ -255,7 +269,11 @@ def calculate_usage_consistency(interactions):
             return 0.0
         
         counts = list(daily_counts.values())
-        return float(np.std(counts))
+        if len(counts) < 2:
+            return 0.0
+        mean = sum(counts) / len(counts)
+        variance = sum((x - mean) ** 2 for x in counts) / len(counts)
+        return float(variance ** 0.5)
     except Exception as e:
         print(f"Error calculating usage consistency: {e}")
         return 0.0
@@ -358,7 +376,7 @@ def extract_behavioral_features(user_id, days=30):
     mood_message_lengths = [len(i.get('notes', '')) for i in mood_logs if i.get('notes')]
     chat_message_lengths = [i.get('length', 0) for i in chat_messages]
     all_message_lengths = mood_message_lengths + chat_message_lengths
-    avg_message_length = float(np.mean(all_message_lengths)) if all_message_lengths else 0.0
+    avg_message_length = float(sum(all_message_lengths) / len(all_message_lengths)) if all_message_lengths else 0.0
     
     # Calculate activity completion (using mood logs with suggestions as proxy)
     logs_with_suggestions = [i for i in mood_logs if i.get('tags')]

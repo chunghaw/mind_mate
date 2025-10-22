@@ -3,7 +3,6 @@ import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 import boto3
-import numpy as np
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ.get('TABLE_NAME', 'EmoCompanion'))
@@ -67,12 +66,21 @@ def calculate_trend(moods):
         return 0.0
     
     try:
-        x = np.arange(len(moods))
-        y = np.array([m['mood'] for m in moods])
+        mood_values = [m['mood'] for m in moods]
+        n = len(mood_values)
         
-        # Linear regression: y = mx + b
-        coefficients = np.polyfit(x, y, 1)
-        slope = float(coefficients[0])
+        if n < 2:
+            slope = 0.0
+        else:
+            # Simple linear regression
+            x_vals = list(range(n))
+            x_mean = sum(x_vals) / n
+            y_mean = sum(mood_values) / n
+            
+            numerator = sum((x_vals[i] - x_mean) * (mood_values[i] - y_mean) for i in range(n))
+            denominator = sum((x_vals[i] - x_mean) ** 2 for i in range(n))
+            
+            slope = numerator / denominator if denominator != 0 else 0.0
         
         return slope
     except Exception as e:
@@ -88,7 +96,7 @@ def calculate_volatility(moods):
         mood_values = [m['mood'] for m in moods]
         daily_changes = [abs(mood_values[i] - mood_values[i-1]) 
                         for i in range(1, len(mood_values))]
-        return float(np.mean(daily_changes))
+        return float(sum(daily_changes) / len(daily_changes)) if daily_changes else 0.0
     except Exception as e:
         print(f"Error calculating volatility: {e}")
         return 0.0
@@ -171,7 +179,9 @@ def calculate_weekend_difference(moods):
                 continue
         
         if weekend_moods and weekday_moods:
-            return float(np.mean(weekend_moods) - np.mean(weekday_moods))
+            weekend_avg = sum(weekend_moods) / len(weekend_moods)
+            weekday_avg = sum(weekday_moods) / len(weekday_moods)
+            return float(weekend_avg - weekday_avg)
         return 0.0
     except Exception as e:
         print(f"Error calculating weekend difference: {e}")
@@ -223,19 +233,19 @@ def extract_mood_features(user_id, days=30):
         'mood_trend_30day': calculate_trend(moods_30day),
         
         # Statistical features - 7 day
-        'mood_mean_7day': float(np.mean(mood_values_7)) if mood_values_7 else 5.0,
-        'mood_std_7day': float(np.std(mood_values_7)) if len(mood_values_7) > 1 else 0.0,
-        'mood_variance_7day': float(np.var(mood_values_7)) if len(mood_values_7) > 1 else 0.0,
-        'mood_min_7day': float(np.min(mood_values_7)) if mood_values_7 else 5.0,
-        'mood_max_7day': float(np.max(mood_values_7)) if mood_values_7 else 5.0,
+        'mood_mean_7day': float(sum(mood_values_7) / len(mood_values_7)) if mood_values_7 else 5.0,
+        'mood_std_7day': float((sum((x - sum(mood_values_7)/len(mood_values_7))**2 for x in mood_values_7) / len(mood_values_7))**0.5) if len(mood_values_7) > 1 else 0.0,
+        'mood_variance_7day': float(sum((x - sum(mood_values_7)/len(mood_values_7))**2 for x in mood_values_7) / len(mood_values_7)) if len(mood_values_7) > 1 else 0.0,
+        'mood_min_7day': float(min(mood_values_7)) if mood_values_7 else 5.0,
+        'mood_max_7day': float(max(mood_values_7)) if mood_values_7 else 5.0,
         
         # Statistical features - 14 day
-        'mood_mean_14day': float(np.mean(mood_values_14)) if mood_values_14 else 5.0,
-        'mood_std_14day': float(np.std(mood_values_14)) if len(mood_values_14) > 1 else 0.0,
+        'mood_mean_14day': float(sum(mood_values_14) / len(mood_values_14)) if mood_values_14 else 5.0,
+        'mood_std_14day': float((sum((x - sum(mood_values_14)/len(mood_values_14))**2 for x in mood_values_14) / len(mood_values_14))**0.5) if len(mood_values_14) > 1 else 0.0,
         
         # Statistical features - 30 day
-        'mood_mean_30day': float(np.mean(mood_values_30)) if mood_values_30 else 5.0,
-        'mood_std_30day': float(np.std(mood_values_30)) if len(mood_values_30) > 1 else 0.0,
+        'mood_mean_30day': float(sum(mood_values_30) / len(mood_values_30)) if mood_values_30 else 5.0,
+        'mood_std_30day': float((sum((x - sum(mood_values_30)/len(mood_values_30))**2 for x in mood_values_30) / len(mood_values_30))**0.5) if len(mood_values_30) > 1 else 0.0,
         
         # Pattern features
         'mood_volatility': calculate_volatility(moods_30day),
