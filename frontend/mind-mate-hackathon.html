@@ -1800,23 +1800,23 @@
                 // Use REAL Bedrock AI for emotion analysis (not rule-based)
                 try {
                     console.log('🧠 Running Bedrock AI emotion analysis...');
-                    
+
                     const analysis = await this.analyzeEmotionsWithBedrock(userText);
-                    
+
                     if (analysis && analysis.insights && analysis.insights.length > 0) {
                         // Add ML analysis AFTER the user message (not after companion response)
                         setTimeout(() => {
                             // Find the last user message to add analysis after it
                             const userMessages = this.container.querySelectorAll('.message.user');
                             const lastUserMessage = userMessages[userMessages.length - 1];
-                            
+
                             if (lastUserMessage) {
                                 const mlDiv = document.createElement('div');
                                 mlDiv.className = 'ml-interpretation';
                                 mlDiv.innerHTML = `
                                     <div class="ml-analysis">
                                         <div class="ml-header" onclick="toggleMLAnalysis(this)" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
-                                            <span>🧠 AI/ML Analysis (Bedrock)</span>
+                                            <span>🧠 AI Analysis</span>
                                             <span class="ml-toggle-arrow" style="font-size: 12px; transition: transform 0.2s;">▼</span>
                                         </div>
                                         <div class="ml-content" style="display: block;">
@@ -1827,7 +1827,7 @@
                                         </div>
                                     </div>
                                 `;
-                                
+
                                 // Insert after the user message
                                 lastUserMessage.parentNode.insertBefore(mlDiv, lastUserMessage.nextSibling);
                                 scrollToBottom();
@@ -3245,19 +3245,19 @@
         function toggleMLAnalysis(headerElement) {
             const mlContent = headerElement.nextElementSibling;
             const arrow = headerElement.querySelector('.ml-toggle-arrow');
-            
+
             // Determine new state
             const isCurrentlyExpanded = mlContent.style.display !== 'none';
             const newState = isCurrentlyExpanded ? 'none' : 'block';
             const newArrow = isCurrentlyExpanded ? '▶' : '▼';
             const newRotation = isCurrentlyExpanded ? 'rotate(-90deg)' : 'rotate(0deg)';
-            
+
             // Apply to ALL ML analyses (sync them)
             const allMLAnalyses = document.querySelectorAll('.ml-analysis');
             allMLAnalyses.forEach(analysis => {
                 const content = analysis.querySelector('.ml-content');
                 const arrowEl = analysis.querySelector('.ml-toggle-arrow');
-                
+
                 if (content && arrowEl) {
                     content.style.display = newState;
                     arrowEl.style.transform = newRotation;
@@ -4212,7 +4212,7 @@
 
                 // Check if we have meaningful data or need to enhance it
                 const hasLimitedData = Object.keys(riskData.features || {}).length < 10;
-                
+
                 if (hasLimitedData) {
                     console.log('⚠️ Limited ML features detected, enhancing analysis...');
                     // Enhance the analysis with more realistic data for demo
@@ -4240,13 +4240,13 @@
                     // Use actual ML data with proper bounds checking
                     const rawRiskScore = riskData.riskScore || 0;
                     console.log(`🔍 Raw risk score from API: ${rawRiskScore}`);
-                    
+
                     const riskScore = Math.max(0, Math.min(1, rawRiskScore)); // Ensure 0-1 range
                     console.log(`🔍 Bounded risk score: ${riskScore}`);
-                    
+
                     const calculatedWellness = Math.round(Math.max(10, Math.min(100, 100 - (riskScore * 100))));
                     console.log(`🔍 Calculated wellness score: ${calculatedWellness}`);
-                    
+
                     AppState.wellness.score = calculatedWellness;
                     AppState.wellness.riskScore = riskScore;
                     AppState.wellness.riskLevel = riskData.riskLevel.toUpperCase();
