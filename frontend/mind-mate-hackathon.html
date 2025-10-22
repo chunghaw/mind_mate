@@ -1104,6 +1104,9 @@
                 <h1 class="onboarding-title">Mind Mate</h1>
                 <p class="onboarding-subtitle">Your AI Pet Companion for Mental Wellness</p>
                 <button class="onboarding-btn" onclick="startOnboarding()">🌟 Get Started</button>
+                <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
+                    Already have an account? <a href="#" style="color: #4ade80; text-decoration: none; font-weight: 600;" onclick="showSignIn(); return false;">Sign In</a>
+                </p>
             </div>
         </div>
 
@@ -1335,6 +1338,21 @@
         const API_BASE = "https://h8iyzk1h3k.execute-api.us-east-1.amazonaws.com";
         const CHAT_API = "https://7ctr3cdwnfuy2at5qt36mdziee0ugypx.lambda-url.us-east-1.on.aws";
         const CHAT_HISTORY_API = "https://4tybbjkqlkwewxgawzcjjhdzty0hygwv.lambda-url.us-east-1.on.aws";
+
+        // ===== ONBOARDING FUNCTIONS (DEFINED EARLY) =====
+        function showOnboardingScreen(screenId) {
+            document.querySelectorAll('.onboarding-screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startOnboarding() {
+            showOnboardingScreen('petSelectionScreen');
+        }
+
+        function showSignIn() {
+            // Redirect to the onboarding page which has the sign-in functionality
+            window.location.href = '/onboarding.html';
+        }
 
         // Get authenticated user ID from localStorage (set during onboarding)
         function getUserId() {
@@ -2529,10 +2547,7 @@
         // ===== ONBOARDING LOGIC =====
         let selectedPet = { image: 'Gentle Guardian.jpeg', name: 'Gentle Guardian' };
 
-        // Make sure functions are in global scope
-        window.startOnboarding = function() {
-            showOnboardingScreen('petSelectionScreen');
-        };
+        // Functions are now defined at the top of the script
 
         function selectPet(image, name) {
             selectedPet = { image, name };
@@ -2579,10 +2594,7 @@
             avatarEl.src = petImage;
         }
 
-        window.showOnboardingScreen = function(screenId) {
-            document.querySelectorAll('.onboarding-screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-        };
+        // showOnboardingScreen function is now defined at the top of the script
 
         function checkOnboarding() {
             const completed = localStorage.getItem('mindmate_onboarding_complete');
@@ -2601,16 +2613,17 @@
             const token = localStorage.getItem('mindmate_token');
             const onboardingComplete = localStorage.getItem('mindmate_onboardingComplete');
 
-            // Check for demo mode via URL parameter
+            // Check for demo mode via URL parameter or localStorage
             const urlParams = new URLSearchParams(window.location.search);
-            const demoMode = urlParams.get('demo') === 'true';
+            const demoModeUrl = urlParams.get('demo') === 'true';
+            const demoModeStorage = localStorage.getItem('demoMode') === 'true';
 
-            if (demoMode) {
+            if (demoModeUrl || demoModeStorage) {
                 console.log('🎭 Running in DEMO mode');
                 // Set demo credentials
                 localStorage.setItem('mindmate_token', 'demo-token');
                 localStorage.setItem('mindmate_onboardingComplete', 'true');
-                localStorage.setItem('mindmate_userId', 'demo-user');
+                localStorage.setItem('mindmate_userId', 'demo-user-123');
                 return true;
             }
 
@@ -3106,7 +3119,6 @@
         });
 
         console.log('✅ All systems ready!');
-        };
     </script>
 </body>
 
