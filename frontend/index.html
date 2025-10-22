@@ -504,7 +504,7 @@
                 <!-- Step 4: Pet Asks for User's Name -->
                 <div id="nameScreen" class="screen">
                     <div class="conversation-card">
-                        <div class="pet-avatar-large" id="petAvatar">🐶</div>
+                        <img src="Gentle Guardian.jpeg" alt="Pet Avatar" class="pet-avatar-large" id="petAvatar">
                         <div class="pet-message" id="nameGreeting">
                             Hi there! I'm so excited to be your companion!<br>
                             What should I call you?
@@ -517,7 +517,7 @@
                 <!-- Step 5: User Names the Pet -->
                 <div id="petNameScreen" class="screen">
                     <div class="conversation-card">
-                        <div class="pet-avatar-large" id="petNameAvatar">🐶</div>
+                        <img src="Gentle Guardian.jpeg" alt="Pet Avatar" class="pet-avatar-large" id="petNameAvatar">
                         <div class="pet-message" id="petNameGreeting">
                             Nice to meet you, <span id="userNameDisplay"></span>!<br>
                             What would you like to call me?
@@ -530,7 +530,7 @@
                 <!-- Step 6: Pet Introduces Itself -->
                 <div id="introScreen" class="screen">
                     <div class="conversation-card">
-                        <div class="pet-avatar-large" id="introPetAvatar">🐶</div>
+                        <img src="Gentle Guardian.jpeg" alt="Pet Avatar" class="pet-avatar-large" id="introPetAvatar">
                         <div class="pet-message" id="introGreeting">Nice to meet you!</div>
                         <p class="intro-text" id="introText">
                             You can call me Buddy. I'm here to support your mental wellness journey.<br><br>
@@ -563,6 +563,7 @@
                     gentle: {
                         name: 'Gentle Guardian',
                         emoji: '🐶',
+                        image: 'Gentle Guardian.jpeg',
                         desc: 'patience and care',
                         greeting: 'Hi there! I\'m so excited to be your companion! What should I call you?',
                         intro: 'Nice to meet you, {name}! You can call me Buddy. I\'m here to support your mental wellness journey with patience and care.',
@@ -571,6 +572,7 @@
                     playful: {
                         name: 'Playful Pal',
                         emoji: '🐱',
+                        image: 'Playful Pal.jpeg',
                         desc: 'energy and fun',
                         greeting: 'Hey there! 😊 I\'m SO excited to meet you! What\'s your name?',
                         intro: 'Yay! Hi {name}! 🎉 I\'m Buddy, and I\'m here to make your wellness journey fun and uplifting!',
@@ -579,6 +581,7 @@
                     focused: {
                         name: 'Focused Friend',
                         emoji: '🐉',
+                        image: 'Focused Friend.jpeg',
                         desc: 'clarity and purpose',
                         greeting: 'Greetings. I\'m here to support you. What should I call you?',
                         intro: 'Perfect. Nice to meet you, {name}. I\'m Buddy. Let\'s work together on your mental wellness with clarity and purpose.',
@@ -587,6 +590,7 @@
                     sensitive: {
                         name: 'Sensitive Soul',
                         emoji: '🦊',
+                        image: 'Sensitive Soul.png',
                         desc: 'deep empathy',
                         greeting: 'Hi... I\'m so glad you\'re here. What should I call you?',
                         intro: 'It\'s wonderful to meet you, {name}... I\'m Buddy, and I\'m here to understand and support you with deep empathy.',
@@ -835,7 +839,7 @@
 
                         // Update name screen with personality
                         const details = personalityDetails[selectedPersonality];
-                        document.getElementById('petAvatar').textContent = details.emoji;
+                        document.getElementById('petAvatar').src = details.image;
                         document.getElementById('nameGreeting').innerHTML = details.greeting;
 
                         // Navigate to name screen
@@ -845,7 +849,7 @@
                         // Continue anyway for demo
                         localStorage.setItem('mindmate_personality', selectedPersonality);
                         const details = personalityDetails[selectedPersonality];
-                        document.getElementById('petAvatar').textContent = details.emoji;
+                        document.getElementById('petAvatar').src = details.image;
                         document.getElementById('nameGreeting').innerHTML = details.greeting;
                         showScreen('nameScreen');
                     }
@@ -866,7 +870,7 @@
                     // Update pet name screen
                     const personality = localStorage.getItem('mindmate_personality');
                     const details = personalityDetails[personality];
-                    document.getElementById('petNameAvatar').textContent = details.emoji;
+                    document.getElementById('petNameAvatar').src = details.image;
                     document.getElementById('userNameDisplay').textContent = userName;
 
                     // Navigate to pet name screen
@@ -907,7 +911,7 @@
 
                         // Update intro screen
                         const details = personalityDetails[personality];
-                        document.getElementById('introPetAvatar').textContent = details.emoji;
+                        document.getElementById('introPetAvatar').src = details.image;
                         document.getElementById('introGreeting').textContent = `Nice to meet you, ${userName}!`;
                         document.getElementById('introText').innerHTML = `You can call me ${petName}. I'm your ${details.name}. I'm here to support your mental wellness journey with ${details.desc.toLowerCase()}.<br><br>I'll check in with you, listen to how you're feeling, and suggest activities that might help.<br><br>Ready to start?`;
 
@@ -921,7 +925,7 @@
                         localStorage.setItem('mindmate_petName', petName);
                         localStorage.setItem('mindmate_pet_emoji', personalityDetails[personality].emoji);
                         const details = personalityDetails[personality];
-                        document.getElementById('introPetAvatar').textContent = details.emoji;
+                        document.getElementById('introPetAvatar').src = details.image;
                         document.getElementById('introGreeting').textContent = `Nice to meet you, ${userName}!`;
                         document.getElementById('introText').innerHTML = `You can call me ${petName}. I'm your ${details.name}. I'm here to support your mental wellness journey with ${details.desc}.<br><br>I'll check in with you, listen to how you're feeling, and suggest activities that might help.<br><br>Ready to start?`;
                         showScreen('introScreen');
