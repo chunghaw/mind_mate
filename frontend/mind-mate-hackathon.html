@@ -4215,21 +4215,8 @@
                     AppState.wellness.riskLevel = AppState.wellness.riskScore > 0.3 ? 'MODERATE' : 'LOW';
                     AppState.wellness.confidence = Math.round(75 + Math.random() * 15); // 75-90%
                     AppState.wellness.featuresAnalyzed = 12 + Math.floor(Math.random() * 8); // 12-20 features
-                    // Generate realistic risk factors based on risk level
-                    if (AppState.wellness.riskScore > 0.3) {
-                        AppState.wellness.riskFactors = [
-                            'Mood variability detected in recent patterns',
-                            'Some decline in engagement consistency',
-                            'Irregular sleep or activity patterns noted',
-                            'Stress indicators present in communication'
-                        ];
-                    } else {
-                        AppState.wellness.riskFactors = [
-                            'Generally stable mood patterns',
-                            'Consistent engagement with wellness activities',
-                            'Positive sentiment trends detected'
-                        ];
-                    }
+                    // Use REAL risk factors from ML API, not demo data
+                    AppState.wellness.riskFactors = riskData.riskFactors || ['Analysis in progress - building user profile'];
                 } else {
                     // Use actual ML data with proper bounds checking
                     const rawRiskScore = riskData.riskScore || 0;
