@@ -4289,30 +4289,34 @@
             const reportView = document.getElementById('reportView');
             if (!reportView) return;
 
-            const riskLevel = AppState.wellness.riskLevel;
             const riskScore = AppState.wellness.riskScore;
             const riskFactors = AppState.wellness.riskFactors || [];
             const featuresAnalyzed = AppState.wellness.featuresAnalyzed;
 
-            // Determine risk color and message
-            let riskColor, riskIcon, riskMessage;
+            // Determine risk level, color, and message based on ACTUAL risk score
+            let riskLevel, riskColor, riskIcon, riskMessage;
             if (riskScore >= 0.8) {
+                riskLevel = 'CRITICAL';
                 riskColor = '#f87171';
                 riskIcon = '🚨';
                 riskMessage = 'Critical - Immediate support recommended';
             } else if (riskScore >= 0.6) {
+                riskLevel = 'HIGH';
                 riskColor = '#fbbf24';
                 riskIcon = '⚠️';
                 riskMessage = 'High - Please reach out for support';
             } else if (riskScore >= 0.4) {
+                riskLevel = 'MODERATE';
                 riskColor = '#60a5fa';
                 riskIcon = '💙';
                 riskMessage = 'Moderate - Consider self-care activities';
             } else if (riskScore >= 0.2) {
+                riskLevel = 'LOW';
                 riskColor = '#86efac';
                 riskIcon = '✅';
                 riskMessage = 'Low - Keep up the good work';
             } else {
+                riskLevel = 'MINIMAL';
                 riskColor = '#4ade80';
                 riskIcon = '🌟';
                 riskMessage = 'Excellent - You\'re doing great!';
@@ -4373,18 +4377,24 @@
                         </div>
                     </div>
                     
-                    ${riskFactors.length > 0 ? `
-                        <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                            <h3 style="margin-bottom: 15px; color: var(--text);">⚠️ Risk Factors Detected</h3>
-                            <ul style="list-style: none; padding: 0; margin: 0;">
-                                ${riskFactors.map(factor => `
-                                    <li style="padding: 10px; margin-bottom: 8px; background: var(--bg); border-radius: 8px; color: var(--text);">
-                                        • ${factor}
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                    ` : ''}
+                    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 15px; color: var(--text);">
+                            ${riskScore >= 0.4 ? '⚠️ Risk Factors Detected' : '✅ Assessment Summary'}
+                        </h3>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            ${riskFactors.length > 0 ? riskFactors.map(factor => `
+                                <li style="padding: 10px; margin-bottom: 8px; background: var(--bg); border-radius: 8px; color: var(--text);">
+                                    • ${factor}
+                                </li>
+                            `).join('') : `
+                                <li style="padding: 10px; margin-bottom: 8px; background: var(--bg); border-radius: 8px; color: var(--text);">
+                                    • ${riskScore < 0.2 ? 'No significant concerns detected - maintaining healthy patterns' : 
+                                         riskScore < 0.4 ? 'Some areas for attention identified - overall stable' :
+                                         'Analysis in progress - please check back for detailed insights'}
+                                </li>
+                            `}
+                        </ul>
+                    </div>
                     
                     <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         <h3 style="margin-bottom: 15px; color: var(--text);">💡 Recommendations</h3>
