@@ -1280,8 +1280,8 @@
                         🎤
                     </button>
                     <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
-                    <button class="image-btn" onclick="document.getElementById('imageInput').click()" aria-label="Upload image">
-                        📷
+                    <button class="image-btn" onclick="document.getElementById('imageInput').click()" aria-label="Attach file">
+                        📎
                     </button>
                     <input type="text" class="input-field" id="messageInput" placeholder="Share your thoughts or attach an image..."
                         onkeypress="handleKeyPress(event)" aria-label="Message input">
@@ -1362,16 +1362,16 @@
             // Set up demo mode credentials and data
             localStorage.setItem('demoMode', 'true');
             localStorage.setItem('mindmate_token', 'demo-token');
-            localStorage.setItem('mindmate_userId', 'a48804c8-c051-707b-cc34-d710830e0710'); // Demo user with ML data
-            localStorage.setItem('mindmate_email', 'testuser@mindmate.demo');
-            localStorage.setItem('mindmate_username', 'testuser');
+            localStorage.setItem('mindmate_userId', 'demo_ml_user'); // ML demo user with rich data
+            localStorage.setItem('mindmate_email', 'demo@mindmate.ai');
+            localStorage.setItem('mindmate_username', 'alexchen');
             
             // Set up demo pet and personality
             localStorage.setItem('mindmate_personality', 'gentle');
             localStorage.setItem('mindmate_pet_image', 'Gentle Guardian.jpeg');
             localStorage.setItem('mindmate_pet_emoji', '🐶');
             localStorage.setItem('mindmate_petName', 'Buddy');
-            localStorage.setItem('mindmate_userName', 'Demo User');
+            localStorage.setItem('mindmate_userName', 'Alex Chen');
             localStorage.setItem('mindmate_onboarding_complete', 'true');
             
             // Hide onboarding overlay and start demo
